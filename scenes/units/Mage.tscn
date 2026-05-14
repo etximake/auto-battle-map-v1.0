@@ -6,3 +6,6 @@
 unit_type = "Mage"
 move_speed = 115.0
 max_hp = 30.0
+damage = 40.0
+attack_range = 85.0
+attack_cooldown = 2.0

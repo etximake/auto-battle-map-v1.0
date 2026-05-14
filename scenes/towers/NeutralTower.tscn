@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3 uid="uid://neutral_tower_scene"]
+
+[ext_resource type="Script" path="res://scripts/towers/NeutralTower.gd" id="1_tower"]
+
+[node name="NeutralTower" type="StaticBody2D"]
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("1_tower")
+
+[node name="Body" type="Polygon2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+
+[node name="RangeArea" type="Area2D" parent="."]
+monitoring = false
+monitorable = false
+
+[node name="RangeShape" type="CollisionShape2D" parent="RangeArea"]
+
+[node name="Label" type="Label" parent="."]
+offset_left = -8.0
+offset_top = -10.0
+offset_right = 8.0
+offset_bottom = 10.0
+horizontal_alignment = 1
+vertical_alignment = 1

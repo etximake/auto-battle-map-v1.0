@@ -6,3 +6,6 @@
 unit_type = "Soldier"
 move_speed = 140.0
 max_hp = 50.0
+damage = 15.0
+attack_range = 34.0
+attack_cooldown = 1.0

@@ -1,308 +1,247 @@
-# CODEX PROMPT — Import vào AI Coding Assistant
-## Auto Battle TD Simulator — Godot 4.5
+# CODEX PROMPT - Godot 4.5
+## Ball-Drop Auto Battle Castle Simulator
 
 ---
 
-## MASTER PROMPT (dán toàn bộ vào Codex/Cursor/Claude Code)
+## MASTER PROMPT
 
-```
-Bạn là Godot 4.5 GDScript expert. Tôi đang build một Auto Battle Tower Defense Simulator 
-để quay video YouTube. Game chạy hoàn toàn tự động (không cần player input).
+```text
+Ban la Godot 4.5 GDScript developer. Project la game auto battle simulator de quay video YouTube.
 
-=== MÔ TẢ GAME ===
-- 4 AI player (config được 2-6) mỗi góc màn hình 1280x720
-- Mỗi AI tự động mua unit bằng gold tích theo thời gian
-- Unit spawn tại base, tự march theo path waypoints đến base địch
-- Unit gặp nhau → auto combat (dừng lại, attack nhau)
-- Unit sống sót → tiếp tục march, vào base địch → gây damage
-- Round kết thúc sau 75 giây hoặc khi 1 base bị phá
-- Tự động reset và chạy round mới (loop vô hạn)
+Huong game chinh:
+- 4 AI players.
+- Hai ben man hinh co cac Ball Panel mau.
+- Ball tu roi/chay trong panel va cham RewardSlot.
+- RewardSlot tao unit/item reward cho castle cua player tuong ung.
+- Castle dua reward vao queue va spawn unit ra map theo cooldown.
+- AI khong mua unit bang gold trong base mode. AI chon route/target cho unit sau khi castle spawn.
+- Unit tu di chuyen, tu combat, vao castle dich thi gay damage/score.
+- Game chay tu dong, khong dung player input.
 
-=== TECH STACK ===
-- Godot 4.5, GDScript
-- 2D top-down
-- Không dùng Tilemap phức tạp (dùng ColorRect/Line2D cho map)
-- Unit placeholder dùng style Jelly Blob bằng primitive nodes (`Polygon2D`, `CollisionShape2D`, `Label`), không dùng sprite/image asset ở phase prototype
-- Không cần âm thanh, animation phức tạp
-- Không cần player input
+Tech:
+- Godot 4.5, GDScript 4.x.
+- 2D top-down, resolution 1280x720.
+- Prototype dung primitive nodes, chua dung sprite/image asset that.
+- Khong dung Input.*.
+- Moi GDScript file nen duoi 200 dong.
 
-=== AUTOLOADS (Singletons) ===
-- GameConfig: player_count=4, round_duration=75.0, gold_per_second=5.0, gold_max=50
-- GameState: State enum {IDLE, ROUND_ACTIVE, ROUND_END, SESSION_END}, signals
-- EventBus: tất cả signals trung tâm
+Base mode:
+Ball Panel -> Reward Slot -> RewardManager -> Castle Queue -> Castle Spawn -> AI Route -> Auto Battle.
 
-=== SIGNALS (EventBus) ===
-- unit_spawned(unit, player_id)
-- unit_died(unit, killer_player_id)
-- unit_reached_base(unit, target_base)
-- base_damaged(base, amount, attacker_player)
-- base_destroyed(base)
-- gold_changed(player_id, new_amount)
-- round_reset_requested()
-- tower_attacked(tower, target)
-
-=== NODE TYPES ===
-- Unit: CharacterBody2D, có states MARCHING/ATTACKING/DEAD
-- PlayerBase: Area2D, HP=100, detect units entering
-- NeutralTower: StaticBody2D, auto-attack units in range
-- AIController: Node, think() mỗi 0.5s
-
-=== COLLISION LAYERS ===
-Layer 1=world, 2=units, 3=unit_detection, 4=bases, 5=towers
-
-=== AI STRATEGIES ===
-- AGGRESSIVE: spam unit rẻ nhất (Scout cost=5)
-- BALANCED: mix Scout/Soldier/Mage theo thời gian còn lại
-- ECONOMY: tích gold mua Tank (cost=20) và Mage (cost=15)
-- ADAPTIVE: đọc trạng thái map, phản ứng theo số unit địch
-
-=== UNIT STATS ===
-Scout:   hp=20,  dmg=5,  speed=120, range=25, cooldown=0.8,  cost=5
-Soldier: hp=50,  dmg=15, speed=80,  range=30, cooldown=1.0,  cost=10
-Tank:    hp=150, dmg=8,  speed=50,  range=25, cooldown=1.5,  cost=20
-Mage:    hp=30,  dmg=40, speed=70,  range=80, cooldown=2.0,  cost=15
-
-=== PATH SYSTEM ===
-- Waypoint-based (Array[Vector2]), không dùng NavigationAgent
-- Path từ base mỗi player → center → base đối thủ
-- Mỗi unit lưu array waypoints và current_waypoint_index
-- Khi đến waypoint trong 8px → tăng index
-
-=== OBJECT POOL ===
-- SpawnManager dùng object pool để tái sử dụng Unit instances
-- Pool pre-warm 10 units/loại khi khởi động
-- Unit.reset() để clear state khi return to pool
-
-=== PERFORMANCE ===
-- Max 30 units/player (tổng max 120 units trên map)
-- AI think() mỗi 0.5s (không phải mỗi frame)
-- Unit combat check mỗi frame nhưng chỉ attack khi cooldown hết
-
-Khi tôi hỏi về một file cụ thể, hãy viết code đầy đủ, không truncate.
-Luôn dùng GDScript 4.x syntax (không phải GDScript 2.x).
-Dùng type hints khi có thể: var x: int = 0, func foo() -> void:
+NeutralTower:
+- Da co the giu file de tai dung.
+- Khong active trong base mode.
+- Chi dung cho optional Neutral Tower / Hazard / Capture mode sau.
 ```
 
 ---
 
-## PROMPT THEO TỪNG TASK
+## PROJECT FACTS
 
-### Task 1: Tạo GameConfig.gd
-```
-Viết file GameConfig.gd (Autoload/Singleton) cho Godot 4.5.
-File này chứa tất cả config của game:
-- player_count: int = 4
-- player_colors: Array[Color] (6 màu cho 6 player tối đa)
-- round_duration: float = 75.0
-- rounds_per_session: int = 10  
-- auto_restart: bool = true
-- gold_per_second: float = 5.0
-- gold_max: int = 50
-- starting_gold: int = 10
-- time_scale: float = 1.0
-- ai_strategies: Array[String] = ["AGGRESSIVE", "BALANCED", "ECONOMY", "ADAPTIVE"]
+```text
+Map area: x=192..1088, y=0..720
+Center: Vector2(640, 360)
 
-Dùng GDScript 4.5 syntax đầy đủ với type hints.
+P0 castle: Vector2(304, 134)
+P1 castle: Vector2(976, 134)
+P2 castle: Vector2(304, 586)
+P3 castle: Vector2(976, 586)
 ```
 
-### Task 2: Tạo EventBus.gd
-```
-Viết EventBus.gd (Autoload) cho Godot 4.5 game Auto Battle TD.
-Đây là signal bus trung tâm, chứa tất cả signals:
-- unit_spawned(unit: Node, player_id: int)
-- unit_died(unit: Node, killer_player_id: int)
-- unit_reached_base(unit: Node, target_base: Node)
-- base_damaged(base: Node, amount: float, attacker_player: int)
-- base_destroyed(base: Node)
-- gold_changed(player_id: int, new_amount: float)
-- round_reset_requested()
-- tower_attacked(tower: Node, target: Node)
+Colors:
 
-Chỉ cần extends Node và khai báo signals. Không logic gì khác.
-```
-
-### Task 3: Tạo Unit.gd (base class)
-```
-Viết Unit.gd cho Godot 4.5. Node type: CharacterBody2D.
-
-Stats: player_id, unit_type, max_hp, current_hp, damage, move_speed, 
-       attack_range, attack_cooldown
-
-State machine: enum UnitState {MARCHING, ATTACKING, DEAD}
-
-Waypoint system: waypoints: Array[Vector2], current_waypoint_index: int
-- Trong MARCHING: move toward current waypoint, nếu đến gần < 8px thì tăng index
-- Nếu hết waypoints: gọi _reach_base()
-
-Combat: 
-- Trong MARCHING: check DetectionArea.get_overlapping_bodies() tìm enemy unit
-- Nếu có enemy → switch sang ATTACKING, dừng lại
-- Trong ATTACKING: attack enemy mỗi attack_cooldown giây
-- Nếu enemy chết hoặc ra khỏi range → switch về MARCHING
-
-Functions:
-- initialize(p_id, spawn_pos, path) → setup unit
-- take_damage(amount, attacker_id) → reduce hp, gọi _die nếu hp <= 0
-- reset() → clear state cho object pool
-
-Dùng EventBus signals. Dùng call_deferred khi free/return to pool.
-```
-
-### Task 4: Tạo AIController.gd
-```
-Viết AIController.gd cho Godot 4.5. Node type: Node.
-
-Exports: player_id: int, strategy: String
-
-think() được gọi mỗi 0.5s (dùng Timer hoặc accumulate delta).
-
-4 strategies:
-- AGGRESSIVE: mua Scout (cost 5) ngay khi đủ gold
-- BALANCED: suy nghĩ theo thời gian còn lại của round, mix unit types
-- ECONOMY: tích gold, ưu tiên Tank (20) và Mage (15)
-- ADAPTIVE: đọc count units trên map, so sánh my_units vs enemy_units gần base
-
-Mỗi strategy gọi _buy_unit(unit_type) nếu đủ gold.
-_buy_unit gọi ResourceManager.spend_gold() và SpawnManager.spawn_unit().
-Dùng get_tree().get_nodes_in_group("units") để đếm units.
-```
-
-### Task 5: Tạo GameMap.gd + setup path
-```
-Viết GameMap.gd cho Godot 4.5. Node type: Node2D.
-
-Resolution: 1280x720. Map area: x=200 to x=1080, y=0 to y=720.
-
-Base positions:
-  Player 0: Vector2(280, 80)    - top-left
-  Player 1: Vector2(1000, 80)   - top-right
-  Player 2: Vector2(280, 640)   - bottom-left
-  Player 3: Vector2(1000, 640)  - bottom-right
-  Center:   Vector2(640, 360)
-
-Hardcode waypoints cho 4 paths từ mỗi base đến center.
-Function get_march_path(player_id) → ghép path player → reversed path đối thủ.
-Main opponent: 0↔3, 1↔2.
-
-Cũng có _load_paths_from_nodes() để đọc từ Path2D nodes nếu có trong scene.
-```
-
-### Task 6: Tạo RoundManager.gd
-```
-Viết RoundManager.gd cho Godot 4.5. Node type: Node.
-
-Flow:
-- start_round(): tăng current_round, start Timer(75s), emit GameState signals
-- _on_round_timeout(): gọi end_round("timeout")
-- end_round(reason): tính score, emit round_ended, chờ 3s, gọi _prepare_next_round
-- _prepare_next_round(): nếu đủ rounds → _end_session, không thì emit reset + start mới
-- _end_session(): print kết quả, nếu auto_restart chờ 5s rồi restart
-
-Cần node con: Timer tên "RoundTimer".
-Kết nối EventBus.base_destroyed để gọi end_round("base_destroyed").
-```
-
-### Task 7: Tạo SpawnManager.gd với Object Pool
-```
-Viết SpawnManager.gd cho Godot 4.5. Node type: Node.
-
-Object pool: Dictionary unit_type → Array[Unit]
-Pre-warm: 10 units mỗi loại khi _ready()
-
-spawn_unit(player_id, unit_type):
-1. Check max units/player (30)
-2. Lấy unit từ pool (hoặc instantiate mới nếu pool trống)
-3. Setup: initialize(player_id, spawn_pos, path)
-4. Show unit, add to active_units
-5. emit EventBus.unit_spawned
-
-return_to_pool(unit):
-1. Remove từ active_units
-2. unit.hide() + unit.reset()
-3. Append về pool
-
-Scenes preload: Scout, Soldier, Tank, Mage từ res://scenes/units/
-Container node cho units: /root/Main/GameMap/SpawnedUnits
-```
-
-### Task 8: Tạo ResourceManager.gd
-```
-Viết ResourceManager.gd cho Godot 4.5. Node type: Node.
-
-gold: Dictionary [player_id → float]
-
-_process(delta): nếu state là ROUND_ACTIVE, cộng gold_per_second*delta cho mỗi player
-add_gold(player_id, amount): cộng gold, clamp với gold_max, emit EventBus.gold_changed
-spend_gold(player_id, amount) → bool: nếu đủ thì trừ và return true
-get_gold(player_id) → float
-
-Reset khi nhận EventBus.round_reset_requested.
-```
-
-### Task 9: Tạo PlayerPanel.gd (UI)
-```
-Viết PlayerPanel.gd cho Godot 4.5. Node type: PanelContainer (Control).
-
-Export: player_id: int
-
-Nodes con cần có:
-- ScoreLabel: Label (số lớn)
-- GoldBar: ProgressBar (max=50)
-- GoldLabel: Label ("Gold: XX/50")
-- Scout_Count, Soldier_Count, Tank_Count, Mage_Count: Labels
-
-Connect EventBus.gold_changed → update gold display
-Connect EventBus.unit_spawned + unit_died → update unit counts
-Connect GameState.round_ended → update score display
-
-update_gold(amount): cập nhật GoldBar và GoldLabel
-update_unit_count(): đếm units trong group "units" với player_id đúng
-```
-
-### Task 10: Bootstrap — Main.gd (khởi động simulation)
-```
-Viết Main.gd cho Godot 4.5. Node type: Node2D.
-
-_ready():
-1. Set Engine.time_scale = GameConfig.time_scale
-2. Setup PlayerBase nodes: gán player_id cho từng base
-3. Setup AIController nodes: gán player_id và strategy
-4. Setup PlayerPanel: gán player_id
-5. Đợi 1 frame rồi gọi RoundManager.start_round()
-
-Không cần _process, không cần input handling.
-Chỉ là bootstrap và wiring.
+```text
+P0 #E74C3C
+P1 #3498DB
+P2 #2ECC71
+P3 #F1C40F
+other #AAAAAA
 ```
 
 ---
 
-## THỨ TỰ BUILD (Recommended)
+## REQUIRED AUTOLOADS
 
+```text
+GameConfig
+GameState
+EventBus
 ```
-Phase 1 - Core Foundation:
-  1. GameConfig.gd        (autoload)
-  2. GameState.gd         (autoload)
-  3. EventBus.gd          (autoload)
-  4. Unit.gd              (base class)
-  5. GameMap.gd           (paths & waypoints)
 
-Phase 2 - Systems:
-  6. ResourceManager.gd
-  7. SpawnManager.gd
-  8. AIController.gd
-  9. RoundManager.gd
-  10. ScoreManager.gd
+EventBus target signals:
 
-Phase 3 - Entities:
-  11. PlayerBase.gd
-  12. NeutralTower.gd
-  13. Scout/Soldier/Tank/Mage.tscn (set stats)
+```gdscript
+signal reward_generated(player_id: int, reward_type: String)
+signal reward_queued(player_id: int, reward_type: String)
+signal castle_spawn_requested(player_id: int, unit_type: String)
+signal unit_spawned(unit: Node, player_id: int)
+signal unit_died(unit: Node, killer_player_id: int)
+signal unit_reached_castle(unit: Node, target_castle: Node)
+signal castle_damaged(castle: Node, amount: float, attacker_player: int)
+signal castle_destroyed(castle: Node)
+signal round_reset_requested()
+```
 
-Phase 4 - UI:
-  14. PlayerPanel.gd
-  15. HUD.gd
+---
 
-Phase 5 - Wiring:
-  16. Main.gd (bootstrap)
-  17. Test & tune AI strategies
+## TASK PROMPTS
+
+### Task 1: Reconcile GameMap base mode
+
+```text
+Doc GameMap.gd va GameMap.tscn. Hay bo/tat NeutralTower khoi base mode.
+Khong xoa scripts/towers/NeutralTower.gd hoac scenes/towers/NeutralTower.tscn.
+Neu can giu vi tri T, doi thanh optional_tower_positions/OptionalTowerMarkers va khong active.
+Dam bao Main.tscn hoac scene test chay khong co tower ban unit.
+```
+
+### Task 2: Update EventBus for reward loop
+
+```text
+Cap nhat EventBus.gd cho Godot 4.5.
+Them reward/castle signals:
+- reward_generated(player_id: int, reward_type: String)
+- reward_queued(player_id: int, reward_type: String)
+- castle_spawn_requested(player_id: int, unit_type: String)
+- unit_reached_castle(unit: Node, target_castle: Node)
+- castle_damaged(castle: Node, amount: float, attacker_player: int)
+- castle_destroyed(castle: Node)
+Giu signal unit_spawned/unit_died/round_reset_requested neu dang co.
+Signals gold/tower neu dang co thi de lai nhung comment la legacy/optional.
+```
+
+### Task 3: Create BallPanel prototype
+
+```text
+Tao scenes/ui/BallPanel.tscn va scripts/ui/BallPanel.gd.
+BallPanel tu spawn PanelBall theo timer.
+Exports:
+- player_id: int
+- ball_scene: PackedScene
+- spawn_interval: float
+- panel_bounds: Rect2
+
+Khong dung Input.*.
+Prototype co the dung scripted motion, chua can physics phuc tap.
+Moi khi ball cham RewardSlot, RewardSlot se emit reward_generated.
+```
+
+### Task 4: Create PanelBall
+
+```text
+Tao scenes/ui/PanelBall.tscn va scripts/ui/PanelBall.gd.
+Node co the la Area2D hoac CharacterBody2D.
+Dung primitive visual, khong sprite.
+Ball co:
+- player_id
+- velocity
+- panel_bounds
+- setup(new_player_id, bounds)
+- reset/despawn
+
+Ball di chuyen tu dong trong panel va bi xoa/reset sau khi cham slot.
+```
+
+### Task 5: Create RewardSlot
+
+```text
+Tao scenes/ui/RewardSlot.tscn va scripts/ui/RewardSlot.gd.
+RewardSlot la Area2D.
+Exports:
+- player_id: int
+- reward_type: String
+
+Khi PanelBall cua cung player cham slot:
+- emit EventBus.reward_generated(player_id, reward_type)
+- goi despawn/reset tren ball
+
+Visual dung primitive ColorRect/Polygon2D/Label.
+```
+
+### Task 6: Create RewardManager
+
+```text
+Tao scripts/systems/RewardManager.gd.
+RewardManager listen EventBus.reward_generated.
+Tim PlayerBase/PlayerCastle theo player_id trong group "castles".
+Goi castle.queue_reward(reward_type).
+Emit reward_queued.
+Khong spawn unit truc tiep trong RewardManager.
+```
+
+### Task 7: Refactor PlayerBase into castle queue
+
+```text
+Cap nhat scripts/players/PlayerBase.gd de dong vai tro castle.
+Them:
+- reward_queue: Array[String]
+- queue_reward(reward_type: String) -> void
+- spawn_timer/spawn_cooldown
+- _process(delta) pop queue khi cooldown het
+
+Khi reward la unit:
+1. Tim AIController cua player.
+2. Lay route_points tu AI/GameMap.
+3. Goi SpawnManager.spawn_unit(player_id, reward_type, route_points).
+
+Giu HP/damage/base destroyed logic neu dang co.
+```
+
+### Task 8: Refactor SpawnManager API
+
+```text
+Cap nhat SpawnManager.gd.
+API muc tieu:
+spawn_unit(player_id: int, unit_type: String, path_points: Array[Vector2]) -> Unit
+
+SpawnManager:
+- Lay/instantiate unit scene.
+- Dat spawn position theo castle/player.
+- Goi setup/init tren Unit voi path_points.
+- Add vao SpawnedUnits.
+- Emit unit_spawned.
+
+Khong yeu cau ResourceManager.spend_gold trong base mode.
+```
+
+### Task 9: Refactor AIController
+
+```text
+Cap nhat AIController.gd.
+Bo logic mua unit bang gold khoi base mode.
+AIController chi cung cap:
+- choose_target_player(unit_type: String) -> int
+- choose_route(unit_type: String, target_player_id: int) -> Array[Vector2]
+
+Strategy:
+AGGRESSIVE chon target gan/yeu.
+BALANCED xoay vong target.
+ECONOMY co the giu burst/item sau.
+ADAPTIVE doc so unit tren map va doi target.
+```
+
+### Task 10: Integrated test scene
+
+```text
+Tao TestCastleQueue.tscn hoac cap nhat Main.tscn de test:
+BallPanel spawn ball -> RewardSlot -> RewardManager -> Castle queue -> SpawnManager -> Unit di path.
+Khong co NeutralTower active.
+Khong co loi console.
+Khong dung Input.*.
+```
+
+---
+
+## BUILD ORDER MOI
+
+```text
+1. Reconcile GameMap, remove active towers from base mode
+2. EventBus reward/castle signals
+3. BallPanel + PanelBall + RewardSlot
+4. RewardManager
+5. PlayerBase castle queue
+6. SpawnManager API from castle queue
+7. AIController route decision
+8. Round/UI integration
+9. Optional Neutral Tower mode later
 ```

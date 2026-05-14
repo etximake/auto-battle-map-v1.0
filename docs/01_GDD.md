@@ -1,6 +1,6 @@
 # Game Design Document (GDD)
 ## Project: Auto Battle TD Simulator
-### Version 1.0 — Godot 4.5 | YouTube Simulation Build
+### Version 1.1 - Godot 4.5 | YouTube Simulation Build
 
 ---
 
@@ -9,218 +9,205 @@
 | Thuộc tính | Giá trị |
 |---|---|
 | Engine | Godot 4.5 |
-| Mục tiêu | Auto Simulation để quay video YouTube |
-| Thể loại | Competitive Tower Defense Auto-Battler |
-| Số player | Linh hoạt (config: 2–6 AI players) |
-| Điều khiển | 100% AI, không cần input người chơi |
+| Mục tiêu | Auto simulation để quay video YouTube |
+| Thể loại | Ball-Drop Auto Battle / Castle Spawn Simulator |
+| Số player | 4 AI players, có thể mở rộng 2-6 |
+| Điều khiển | 100% tự động, không cần player input |
 | Góc nhìn | Top-down 2D |
-| Thời gian/round | Config được (mặc định 75 giây) |
+| Resolution chính thức | 1280x720 |
+
+Core fantasy:
+> Các panel màu ở hai bên liên tục thả ball. Ball rơi trúng ô reward nào thì castle của team đó nhận unit/item tương ứng. Castle tự spawn quân vào map, AI chọn hướng đi, quân tự giao chiến để tạo một trận auto battle dễ xem cho YouTube.
 
 ---
 
-## 2. THỂ LOẠI & ĐỊNH NGHĨA
+## 2. GAME MODE CHÍNH
 
-**Competitive Tower Defense Auto-Battler** — kết hợp 3 thể loại:
+### Base Mode: Ball Panel Castle Battle
 
-- **Tower Defense**: Đường path cố định, quân đi từ base ra
-- **Auto-Battler**: Quân tự spawn, tự di chuyển, tự combat
-- **Competitive PvP (giả lập)**: Nhiều AI cùng lúc, đấu real-time trên 1 map
+Đây là mode chính cần bám theo ảnh game mục tiêu.
 
-### Core Fantasy (cho video YouTube):
-> *"Xem các đội quân tự động giao chiến, tranh giành lãnh thổ trên bản đồ chia 4 góc — không cần người chơi can thiệp."*
+Loop chính:
+```text
+Round Start
+  -> Ball xuất hiện/rơi trong từng PlayerPanel
+  -> Ball chạm reward slot
+  -> Reward tạo unit/item cho castle tương ứng
+  -> Castle đưa reward vào spawn queue
+  -> Castle spawn unit ra map
+  -> AI chọn route/target cho unit
+  -> Unit tự di chuyển và combat
+  -> Unit vào castle địch gây damage/score
+  -> Round timeout hoặc castle bị phá
+  -> Reset và round mới
+```
+
+### Optional Mode: Neutral Tower Variant
+
+`NeutralTower` không thuộc base mode. Tower trung lập có thể dùng cho mode phụ sau này:
+- Tower bắn tất cả unit đi ngang.
+- Tower có thể là hazard mode, challenge mode hoặc capture mode.
+- Code/scene tower được giữ lại để tái dùng, nhưng **không đặt active trong gameplay base**.
 
 ---
 
-## 3. GAME LOOP CHÍNH
+## 3. MÀN HÌNH & BỐ CỤC
 
+```text
+┌────────────┬────────────────────────┬────────────┐
+│ Panel P0   │                        │ Panel P1   │
+│ Ball board │                        │ Ball board │
+├────────────┤      MAP / CASTLES     ├────────────┤
+│ Panel P2   │      AUTO BATTLE       │ Panel P3   │
+│ Ball board │                        │ Ball board │
+└────────────┴────────────────────────┴────────────┘
 ```
-┌─────────────────────────────────────────────────┐
-│                  SIMULATION LOOP                │
-│                                                 │
-│  [Round Start]                                  │
-│       ↓                                         │
-│  [Mỗi AI Player tích Resource theo thời gian]   │
-│       ↓                                         │
-│  [AI quyết định mua Unit type nào]              │
-│       ↓                                         │
-│  [Unit spawn tại base, march theo Path]         │
-│       ↓                                         │
-│  [Unit gặp Unit địch → Auto Combat]             │
-│       ↓                                         │
-│  [Unit sống sót → tiếp tục march đến base địch]│
-│       ↓                                         │
-│  [Gây damage cho base địch]                     │
-│       ↓                                         │
-│  [Round kết thúc theo timer / base bị phá]      │
-│       ↓                                         │
-│  [Tính điểm, reset, Round mới]                  │
-└─────────────────────────────────────────────────┘
-```
+
+- Map area chính thức: `x=192..1088`, `y=0..720`.
+- Center: `Vector2(640, 360)`.
+- Castle/base positions:
+  - P0: `Vector2(304, 134)`
+  - P1: `Vector2(976, 134)`
+  - P2: `Vector2(304, 586)`
+  - P3: `Vector2(976, 586)`
+- Hai vùng biên trái/phải dành cho ball panels và UI.
 
 ---
 
-## 4. BỐ CỤC MÀN HÌNH (SIMULATION VIEW)
+## 4. BALL PANEL SYSTEM
 
-```
-┌──────────┬────────────────────────┬──────────┐
-│ PLAYER 1 │                        │ PLAYER 2 │
-│  Panel   │      MAP TRUNG TÂM     │  Panel   │
-│          │   (Top-down, Path)     │          │
-├──────────┤                        ├──────────┤
-│ PLAYER 3 │                        │ PLAYER 4 │
-│  Panel   │                        │  Panel   │
-└──────────┴────────────────────────┴──────────┘
-```
+Mỗi player có một panel màu.
 
-- **Map trung tâm**: ~70% chiều rộng màn hình
-- **4 Panel góc**: Hiển thị stats AI player (resource, unit count, score)
-- **Timer overlay**: Góc trên trái (thời gian round hiện tại / tổng)
+Panel có:
+- Ball spawn area.
+- Ball rơi/tung tự động bằng physics hoặc scripted motion.
+- Reward slots ở dưới panel.
+- Score/stock number lớn.
+- Unit/item counters.
 
----
+Ball behavior:
+1. Spawn ở đầu panel theo timer.
+2. Rơi/bounce trong vùng panel.
+3. Khi chạm reward slot, emit reward event.
+4. Reward được gửi tới castle/team tương ứng.
+5. Ball bị despawn hoặc reset.
 
-## 5. MAP & PATH DESIGN
-
-### Cấu trúc Path:
-- Map có dạng **cross/spider** — 4 nhánh path từ 4 góc hội tụ về trung tâm
-- Mỗi player có **1 base** ở góc tương ứng
-- Path nối **base A → trung tâm → base B** (mỗi cặp đối diện)
-- Unit đi từ base mình → hướng về base đối thủ gần nhất
-
-### Path Nodes (Waypoints):
-```
-Base[Player1] → WP1 → WP2 → CENTER → WP3 → WP4 → Base[Player2]
-Base[Player3] → WP5 → WP6 → CENTER → WP7 → WP8 → Base[Player4]
-```
-
-### Towers dọc path:
-- Có các **neutral tower** cố định dọc đường
-- Tower tự động bắn vào unit đi qua trong range
-- Tower có thể bị **chiếm** bởi team đã đẩy quân qua đó (optional, Phase 2)
+Giai đoạn đầu có thể scripted đơn giản, chưa cần physics phức tạp.
 
 ---
 
-## 6. PLAYERS & AI CONFIG
+## 5. REWARD & ITEM SYSTEM
 
-### Player Config (GameConfig.gd):
-```gdscript
-var player_count: int = 4          # 2-6
-var player_colors: Array = [
-    Color.RED, Color.BLUE, 
-    Color.GREEN, Color.YELLOW,
-    Color.CYAN, Color.PURPLE
-]
-var round_duration: float = 75.0   # giây
-var rounds_per_session: int = 10   # số round trước khi restart
-```
+Reward slot có thể tạo:
+- Unit: Scout, Soldier, Tank, Mage.
+- Item: speed boost, heal, shield, multiplier.
+- Economy bonus: extra ball, x2 reward, fast spawn.
 
-### AI Strategy Types:
-| Strategy | Mô tả | Hành vi |
-|---|---|---|
-| `AGGRESSIVE` | Spam unit nhiều nhất có thể | Mua ngay khi đủ tiền, ưu tiên unit rẻ |
-| `BALANCED` | Cân bằng số lượng & chất lượng | Mix nhiều loại unit |
-| `ECONOMY` | Tích tiền mua unit mạnh | Chờ đủ tiền mua unit đắt |
-| `ADAPTIVE` | Phản ứng theo tình hình | Đọc số unit địch để điều chỉnh |
+Trong prototype gần nhất, ưu tiên unit rewards trước:
+
+| Reward | Kết quả |
+|---|---|
+| Scout slot | Castle queue thêm Scout |
+| Soldier slot | Castle queue thêm Soldier |
+| Tank slot | Castle queue thêm Tank |
+| Mage slot | Castle queue thêm Mage |
+| x2 slot | Nhân đôi reward tiếp theo hoặc tăng spawn burst |
 
 ---
 
-## 7. RESOURCE SYSTEM
+## 6. CASTLE / BASE SYSTEM
 
-### Resource Panel (mỗi player):
-- **Gold**: Tăng tự động theo thời gian (passive income)
-- **Gold rate**: Config được, mặc định +5 gold/giây
-- **Max gold**: 50 (thấy trong video: x/50)
-- **Spend**: Trừ gold khi mua unit
+Castle là nơi nhận reward và spawn unit.
 
-### Hiển thị panel (quan sát từ video):
-```
-[Score/Wave Number] ← số lớn ở góc panel
-[Dot Grid]          ← visualize gold pool (dots sáng = gold đang có)
-[Unit1: x/max] [Unit2: x/max] [Unit3: x/max] [Unit4: x/max]
-[x2 multiplier button]
-```
+Castle behavior:
+1. Nhận reward từ `BallPanel`.
+2. Đưa unit/item vào queue.
+3. Spawn unit theo cooldown riêng.
+4. Hỏi AI route/target để gán path cho unit.
+5. Bị unit địch vào gây damage.
+
+`PlayerBase` hiện có thể refactor thành `PlayerCastle`.
+
+---
+
+## 7. AI SYSTEM
+
+AI không còn trực tiếp mua unit bằng gold trong base mode.
+
+AI nên quyết định:
+- Castle spawn unit đi lane/path nào.
+- Ưu tiên tấn công castle nào.
+- Khi có nhiều route, chọn route ít địch hơn hoặc route đang cần phòng thủ.
+- Có dùng item ngay hay giữ trong queue không.
+
+Strategy gợi ý:
+
+| Strategy | Hành vi |
+|---|---|
+| AGGRESSIVE | Chọn route ngắn, đẩy quân liên tục |
+| BALANCED | Chia quân giữa attack/defense |
+| ECONOMY | Ưu tiên giữ item/x2/burst lâu hơn |
+| ADAPTIVE | Đọc số unit địch và đổi route theo trạng thái map |
 
 ---
 
 ## 8. UNIT SYSTEM
 
-### Unit Types (4 loại cơ bản mỗi player):
+Unit hiện dùng Jelly Blob placeholder bằng primitive nodes.
 
-| Slot | Tên gọi | Cost | HP | DMG | Speed | Role |
-|---|---|---|---|---|---|---|
-| 1 | Scout | 5 | 20 | 5 | Fast | Nhử địch |
-| 2 | Soldier | 10 | 50 | 15 | Normal | DPS chính |
-| 3 | Tank | 20 | 150 | 8 | Slow | Absorb damage |
-| 4 | Mage | 15 | 30 | 40 | Normal | Burst damage |
+Unit behavior:
+1. Spawn từ castle.
+2. Nhận path/route do AI chọn.
+3. Đi theo waypoint.
+4. Gặp unit địch trong range thì dừng đánh.
+5. Thắng combat thì tiếp tục đi.
+6. Vào castle địch thì gây damage/score và despawn.
 
-### Placeholder Visual Style:
-- Style chính trong giai đoạn prototype: **Jelly Blob**.
-- Unit được vẽ bằng Godot primitive nodes: `Polygon2D`, `CollisionShape2D`, `Label`.
-- Không dùng sprite/image asset ở giai đoạn placeholder.
-- Màu unit lấy theo `player_id`; biến thể Scout/Soldier/Tank/Mage khác nhau bằng kích thước, tốc độ và label.
+Unit stats prototype:
 
-### Unit Behavior (Auto):
-1. Spawn tại base
-2. Follow path waypoints
-3. Nếu gặp unit địch trong range → dừng, attack
-4. Nếu unit địch chết → tiếp tục march
-5. Nếu đến base địch → deal damage, despawn
-
-### Combat:
-- **Melee**: Attack khi trong range 30px
-- **Ranged** (Mage): Attack khi trong range 80px
-- Attack cooldown: 1.0 giây mặc định
+| Unit | HP | DMG | Speed | Range | Cooldown | Role |
+|---|---:|---:|---:|---:|---:|---|
+| Scout | 20 | 5 | Fast | 28 | 0.8 | Nhanh, số lượng |
+| Soldier | 50 | 15 | Normal | 34 | 1.0 | DPS chính |
+| Tank | 150 | 8 | Slow | 32 | 1.5 | Chịu đòn |
+| Mage | 30 | 40 | Medium | 85 | 2.0 | Burst/ranged |
 
 ---
 
-## 9. TOWER SYSTEM
+## 9. MAP & PATH
 
-### Neutral Towers:
-- Đặt sẵn dọc path (không phải player đặt)
-- Auto-attack unit đi qua trong range 100px
-- HP: 200, DMG: 20/shot, Rate: 1.5s
+Base mode dùng map spider/cross có castle ở 4 vùng.
 
-### Tower Placement:
-- 2 towers mỗi nhánh path = 8 towers tổng (4 player map)
-- Position cố định, define trong scene
+Yêu cầu path sắp tới:
+- Không chỉ fixed opposite path.
+- Cần route graph hoặc lane options.
+- AI chọn route khi castle spawn unit.
+- `GameMap.get_march_path(player_id)` hiện là tạm thời, cần refactor thành `get_route(player_id, route_id/target_id)`.
+
+Neutral tower positions hiện tại chỉ giữ làm marker/design reference cho optional mode.
 
 ---
 
 ## 10. WIN CONDITIONS & SCORING
 
-### Round Win:
-- **Timer hết**: Player nào còn nhiều unit trên đường nhất → thắng round
-- **Base bị phá**: Base HP về 0 → player đó thua round
+Round có thể kết thúc khi:
+- Hết timer.
+- Một castle bị phá.
+- Một player đạt score threshold.
 
-### Session Score:
-- Thắng round: +3 điểm
-- Unit vào được base địch: +1 điểm/unit
-- Dùng để hiển thị leaderboard trên video
-
----
-
-## 11. SIMULATION SETTINGS (cho YouTube)
-
-### Auto-restart:
-- Sau mỗi session (N rounds), tự động reset và chạy lại
-- Không cần input người dùng
-- Log kết quả ra console để track
-
-### Speed control:
-- `Engine.time_scale` config được: 1.0x, 1.5x, 2.0x
-- Cho phép quay video ở tốc độ bình thường nhưng test nhanh hơn
-
-### Camera:
-- Fixed top-down, không pan/zoom
-- Toàn bộ map vừa trong 1 màn hình
+Score nguồn:
+- Unit vào castle địch: +1 hoặc gây damage.
+- Phá castle: bonus lớn.
+- Ball panel có thể tạo score bonus riêng.
 
 ---
 
-## 12. KHÔNG CẦN (do mục tiêu YouTube simulation)
+## 11. KHÔNG CẦN Ở GIAI ĐOẠN PROTOTYPE
 
-- ❌ Menu chính / UI đẹp
-- ❌ Sound effects / Music
-- ❌ Player input / Controls
-- ❌ Save/Load game
-- ❌ Animations phức tạp (placeholder shapes OK)
-- ❌ Networking / Multiplayer thật
-- ❌ Mobile support
+- Không cần menu chính.
+- Không cần player input.
+- Không cần asset thật.
+- Không cần animation phức tạp.
+- Không cần sound/music.
+- Không cần networking.
+- Không cần tower trung lập trong base mode.

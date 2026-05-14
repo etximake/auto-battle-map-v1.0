@@ -1,102 +1,161 @@
 # QUICK REFERENCE CARD
-## Auto Battle TD Simulator — Godot 4.5
+## Ball-Drop Auto Battle Castle Simulator - Godot 4.5
 
 ---
 
-## THỨ TỰ BUILD (5 phases, đọc ROADMAP.md để chi tiết)
+## CORE LOOP MOI
 
-```
-Phase 0: Setup (30 phút)
-  → Tạo project, 3 autoloads (GameConfig, GameState, EventBus)
-
-Phase 1: Core Loop (2-3 giờ)
-  → GameMap + paths, Unit march + combat, 4 unit types
-
-Phase 2: AI & Economy (2-3 giờ)
-  → ResourceManager, SpawnManager (pool), AIController (4 strategies)
-
-Phase 3: Round System (1-2 giờ)
-  → RoundManager timer, PlayerBase HP, ScoreManager
-
-Phase 4: Towers (1-2 giờ)
-  → NeutralTower auto-attack, base destruction condition
-
-Phase 5: UI + Polish (2-4 giờ)
-  → HUD timer, Player panels, balancing, quay thử
+```text
+Ball Panel
+  -> Reward Slot
+  -> RewardManager
+  -> Castle Queue
+  -> Castle Spawn
+  -> AI Route Decision
+  -> Unit Auto Battle
+  -> Castle Damage / Score
 ```
 
----
-
-## UNIT STATS NHANH
-
-| Unit    | HP  | DMG | SPD | RNG | CD  | Cost |
-|---------|-----|-----|-----|-----|-----|------|
-| Scout   | 20  | 5   | 120 | 25  | 0.8 | 5    |
-| Soldier | 50  | 15  | 80  | 30  | 1.0 | 10   |
-| Tank    | 150 | 8   | 50  | 25  | 1.5 | 20   |
-| Mage    | 30  | 40  | 70  | 80  | 2.0 | 15   |
+Base mode khong dung neutral tower. Tower da co trong project duoc giu lai cho optional mode sau.
 
 ---
 
-## AI STRATEGY CHEATSHEET
+## THU TU BUILD GAN NHAT
 
-| Strategy   | Mua gì               | Khi nào mua |
-|------------|----------------------|-------------|
-| AGGRESSIVE | Scout (5g)           | Ngay khi đủ |
-| BALANCED   | Mix theo thời gian   | Theo phase  |
-| ECONOMY    | Tank/Mage (20/15g)   | Tích đủ     |
-| ADAPTIVE   | Tùy map state        | Mỗi 0.5s   |
+```text
+Phase 1: Map Base Reconciliation
+  -> Tat/remove Towers trong GameMap base mode
+  -> Giu NeutralTower.gd/.tscn cho optional mode
+
+Phase 2: Ball Panel Prototype
+  -> BallPanel, PanelBall, RewardSlot
+  -> Ball roi/cham slot tao reward event
+
+Phase 3: Castle Queue & Spawn
+  -> Reward vao castle queue
+  -> Castle spawn unit theo cooldown
+
+Phase 4: AI Route Decision
+  -> AI chon route/target
+  -> Khong mua unit bang gold trong base mode
+
+Phase 5: Auto Battle Loop
+  -> Unit combat, castle damage, score
+
+Phase 6: Round & UI
+  -> Timer, panels, score, auto restart
+```
 
 ---
 
-## KEY CONFIGS (GameConfig.gd)
+## PLAYER / CASTLE POSITIONS
+
+Resolution: `1280x720`
+
+```text
+Map area: x=192..1088, y=0..720
+Center:   Vector2(640, 360)
+
+P0 castle: Vector2(304, 134)   top-left
+P1 castle: Vector2(976, 134)   top-right
+P2 castle: Vector2(304, 586)   bottom-left
+P3 castle: Vector2(976, 586)   bottom-right
+```
+
+Side panels:
+- Left side: P0 top, P2 bottom.
+- Right side: P1 top, P3 bottom.
+
+---
+
+## PLAYER COLORS
+
+```text
+P0 = #E74C3C red
+P1 = #3498DB blue
+P2 = #2ECC71 green
+P3 = #F1C40F yellow
+Other = #AAAAAA gray
+```
+
+---
+
+## UNIT STATS PROTOTYPE
+
+| Unit | HP | DMG | Speed | Range | Role |
+|---|---:|---:|---:|---:|---|
+| Scout | 20 | 5 | Fast | 28 | So luong, di nhanh |
+| Soldier | 50 | 15 | Normal | 34 | DPS co ban |
+| Tank | 150 | 8 | Slow | 32 | Chan sat thuong |
+| Mage | 30 | 40 | Medium | 85 | Ranged burst |
+
+---
+
+## REWARD TYPES DAU TIEN
+
+```text
+Scout   -> castle queue +1 Scout
+Soldier -> castle queue +1 Soldier
+Tank    -> castle queue +1 Tank
+Mage    -> castle queue +1 Mage
+x2      -> nhan reward tiep theo hoac spawn burst
+```
+
+Prototype uu tien 4 unit reward truoc. Item/boost de phase sau.
+
+---
+
+## EVENTBUS SIGNALS CAN CO
 
 ```gdscript
-player_count = 4          # 2-6
-round_duration = 75.0     # giây
-gold_per_second = 5.0
-gold_max = 50
-starting_gold = 10
-auto_restart = true
+signal reward_generated(player_id: int, reward_type: String)
+signal reward_queued(player_id: int, reward_type: String)
+signal castle_spawn_requested(player_id: int, unit_type: String)
+signal unit_spawned(unit: Node, player_id: int)
+signal unit_died(unit: Node, killer_player_id: int)
+signal unit_reached_castle(unit: Node, target_castle: Node)
+signal castle_damaged(castle: Node, amount: float, attacker_player: int)
+signal castle_destroyed(castle: Node)
+signal round_reset_requested()
 ```
 
----
-
-## BASE POSITIONS (1280×720)
-
-```
-P0 top-left:     Vector2(280, 80)
-P1 top-right:    Vector2(1000, 80)
-P2 bottom-left:  Vector2(280, 640)
-P3 bottom-right: Vector2(1000, 640)
-Center:          Vector2(640, 360)
-Opponents: 0↔3, 1↔2
-```
-
----
-
-## COLLISION LAYERS
-
-```
-1=world  2=units  3=unit_detect  4=bases  5=towers
-Unit body: Layer=2, Mask=2
-Unit area: Layer=3, Mask=2
-Base:      Layer=4, Mask=2
-Tower:     Layer=5, Mask=2
-```
+Signals cu nhu `gold_changed` va `tower_attacked` chi dung neu bat optional/legacy mode.
 
 ---
 
 ## GROUP NAMES
 
-```
-"units"   → tất cả Unit nodes đang active
-"bases"   → tất cả PlayerBase nodes
-"towers"  → tất cả NeutralTower nodes
+```text
+"units"       -> tat ca Unit dang active
+"castles"     -> tat ca PlayerCastle/PlayerBase nodes
+"ball_panels" -> tat ca BallPanel nodes
+"reward_slots"-> reward slots trong side panels
+"towers"      -> chi dung trong optional Neutral Tower mode
 ```
 
 ---
 
-## FILE CODEX PROMPTS → xem 05_CODEX_PROMPT.md
+## COLLISION LAYERS GOI Y
 
-Dán MASTER PROMPT trước, rồi từng Task Prompt theo thứ tự.
+```text
+1 = world
+2 = units
+3 = unit_detection
+4 = castles
+5 = panel_balls
+6 = reward_slots
+7 = optional_towers
+```
+
+Base mode can `units`, `castles`, `panel_balls`, `reward_slots`.
+
+---
+
+## QUY TAC KHONG DUOC LECH
+
+- Khong dung player input.
+- Khong dung asset that trong prototype.
+- Khong coi neutral tower la core gameplay.
+- Khong mo rong gold-buy AI thanh base loop.
+- Moi phase can co mini test de xem duoc ngay trong Godot.
+- Moi file GDScript nen duoi 200 dong.

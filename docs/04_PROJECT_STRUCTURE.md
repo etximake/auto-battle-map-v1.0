@@ -1,303 +1,283 @@
-# PROJECT STRUCTURE — Godot 4.5
-## Auto Battle TD Simulator — File & Scene Setup Guide
+# PROJECT STRUCTURE - Godot 4.5
+## Ball-Drop Auto Battle Castle Simulator
 
 ---
 
-## 1. KHỞI TẠO PROJECT
+## 1. PROJECT SETTINGS
 
-### Bước 1: Tạo project mới
-```
-Godot 4.5 → New Project
-Name: AutoBattleTD
-Renderer: Forward+ (hoặc Compatibility nếu máy yếu)
-Resolution: 1280 × 720
-```
-
-### Bước 2: Project Settings
-```
-Display → Window:
-  - Width: 1280
-  - Height: 720
-  - Resizable: false (fixed cho quay video)
-
-Application → Run:
-  - Main Scene: res://scenes/main/Main.tscn
+```text
+Engine: Godot 4.5
+Resolution: 1280x720
+Main Scene: res://scenes/main/Main.tscn
+Input: khong dung player input trong gameplay prototype
 ```
 
-### Bước 3: Autoloads (Project → Project Settings → Autoload)
-```
-Path                              Name
-res://scripts/autoloads/GameConfig.gd   → GameConfig
-res://scripts/autoloads/GameState.gd    → GameState
-res://scripts/autoloads/EventBus.gd     → EventBus
+Autoloads:
+
+```text
+res://scripts/autoloads/GameConfig.gd -> GameConfig
+res://scripts/autoloads/GameState.gd  -> GameState
+res://scripts/autoloads/EventBus.gd   -> EventBus
 ```
 
 ---
 
-## 2. CÂY FILE ĐẦY ĐỦ
+## 2. FILE TREE MUC TIEU
 
-```
+```text
 AutoBattleTD/
-│
-├── project.godot
-│
-├── scenes/
-│   ├── main/
-│   │   └── Main.tscn
-│   │
-│   ├── map/
-│   │   └── GameMap.tscn
-│   │
-│   ├── players/
-│   │   ├── PlayerBase.tscn
-│   │   └── PlayerPanel.tscn
-│   │
-│   ├── units/
-│   │   ├── Unit.tscn          ← Base scene (không dùng trực tiếp)
-│   │   ├── Scout.tscn
-│   │   ├── Soldier.tscn
-│   │   ├── Tank.tscn
-│   │   └── Mage.tscn
-│   │
-│   ├── towers/
-│   │   └── NeutralTower.tscn
-│   │
-│   └── ui/
-│       ├── HUD.tscn
-│       └── RoundResult.tscn
-│
-├── scripts/
-│   ├── autoloads/
-│   │   ├── GameConfig.gd
-│   │   ├── GameState.gd
-│   │   └── EventBus.gd
-│   │
-│   ├── map/
-│   │   └── GameMap.gd
-│   │
-│   ├── players/
-│   │   ├── PlayerBase.gd
-│   │   ├── PlayerPanel.gd
-│   │   └── AIController.gd
-│   │
-│   ├── units/
-│   │   ├── Unit.gd
-│   │   └── UnitData.gd        ← Resource class
-│   │
-│   ├── towers/
-│   │   └── NeutralTower.gd
-│   │
-│   └── systems/
-│       ├── RoundManager.gd
-│       ├── SpawnManager.gd
-│       ├── ResourceManager.gd
-│       └── ScoreManager.gd
-│
-└── resources/
-    └── unit_configs/
-        ├── scout_data.tres
-        ├── soldier_data.tres
-        ├── tank_data.tres
-        └── mage_data.tres
+|-- project.godot
+|-- scenes/
+|   |-- main/
+|   |   |-- Main.tscn
+|   |   |-- TestUnits.tscn
+|   |   |-- TestMapPath.tscn
+|   |   |-- TestBallPanel.tscn
+|   |   +-- TestCastleQueue.tscn
+|   |-- map/
+|   |   +-- GameMap.tscn
+|   |-- players/
+|   |   +-- PlayerBase.tscn
+|   |-- units/
+|   |   |-- Unit.tscn
+|   |   |-- Scout.tscn
+|   |   |-- Soldier.tscn
+|   |   |-- Tank.tscn
+|   |   +-- Mage.tscn
+|   |-- ui/
+|   |   |-- BallPanel.tscn
+|   |   |-- PanelBall.tscn
+|   |   |-- RewardSlot.tscn
+|   |   |-- PlayerPanel.tscn
+|   |   +-- HUD.tscn
+|   +-- towers/
+|       +-- NeutralTower.tscn        # optional mode
+|-- scripts/
+|   |-- autoloads/
+|   |   |-- GameConfig.gd
+|   |   |-- GameState.gd
+|   |   +-- EventBus.gd
+|   |-- map/
+|   |   +-- GameMap.gd
+|   |-- players/
+|   |   |-- PlayerBase.gd
+|   |   +-- AIController.gd
+|   |-- units/
+|   |   +-- Unit.gd
+|   |-- ui/
+|   |   |-- BallPanel.gd
+|   |   |-- PanelBall.gd
+|   |   +-- RewardSlot.gd
+|   |-- systems/
+|   |   |-- RewardManager.gd
+|   |   |-- SpawnManager.gd
+|   |   |-- RoundManager.gd
+|   |   +-- ScoreManager.gd
+|   +-- towers/
+|       +-- NeutralTower.gd          # optional mode
++-- docs/
 ```
+
+`ResourceManager.gd` neu con trong repo thi de legacy/optional economy, khong can trong base mode.
 
 ---
 
-## 3. SCENE SETUP CHI TIẾT
+## 3. MAIN.TSCN MUC TIEU
 
-### Main.tscn
-```
-Main (Node2D) [script: none]
-├── GameMap (Node2D) [script: GameMap.gd] [scene: GameMap.tscn]
-├── Players (Node2D)
-│   ├── Player_0 (Node2D)
-│   │   ├── PlayerBase (Area2D) [script: PlayerBase.gd]
-│   │   │   ├── CollisionShape2D (CircleShape r=40)
-│   │   │   ├── SpawnPoint (Marker2D) ← spawn units ở đây
-│   │   │   └── HPBar (ProgressBar)
-│   │   └── AIController (Node) [script: AIController.gd]
-│   │       └── [export] player_id = 0
-│   │       └── [export] strategy = "AGGRESSIVE"
-│   ├── Player_1 ... (tương tự)
-│   ├── Player_2 ...
-│   └── Player_3 ...
-│
-├── Systems (Node)
-│   ├── RoundManager (Node) [script: RoundManager.gd]
-│   │   └── RoundTimer (Timer) [wait_time=75, one_shot=true]
-│   ├── SpawnManager (Node) [script: SpawnManager.gd]
-│   ├── ResourceManager (Node) [script: ResourceManager.gd]
-│   └── ScoreManager (Node) [script: ScoreManager.gd]
-│
-└── UI (CanvasLayer)
-    ├── HUD (Control) [script: HUD.gd] [scene: HUD.tscn]
-    ├── Panel_P0 (Control) [scene: PlayerPanel.tscn] [anchor: top-left]
-    ├── Panel_P1 (Control) [scene: PlayerPanel.tscn] [anchor: top-right]
-    ├── Panel_P2 (Control) [scene: PlayerPanel.tscn] [anchor: bottom-left]
-    └── Panel_P3 (Control) [scene: PlayerPanel.tscn] [anchor: bottom-right]
+```text
+Main (Node2D)
+|-- GameMap (instance: scenes/map/GameMap.tscn)
+|-- Players (Node2D)
+|   |-- Player_0
+|   |   |-- PlayerBase (player_id=0)
+|   |   +-- AIController (player_id=0, strategy=AGGRESSIVE)
+|   |-- Player_1
+|   |-- Player_2
+|   +-- Player_3
+|-- Systems (Node)
+|   |-- RewardManager
+|   |-- SpawnManager
+|   |-- RoundManager
+|   +-- ScoreManager
++-- UI (CanvasLayer)
+    |-- BallPanel_P0
+    |-- BallPanel_P1
+    |-- BallPanel_P2
+    |-- BallPanel_P3
+    |-- HUD
+    +-- ResultPanel
 ```
 
-### GameMap.tscn
-```
+Base mode khong co `Towers` node active.
+
+---
+
+## 4. GAMEMAP.TSCN
+
+```text
 GameMap (Node2D) [script: GameMap.gd]
-├── Background (ColorRect) [color: #5a8f3c, size: 1280×720]
-├── Paths (Node2D)
-│   ├── Path_P0 (Path2D)   ← vẽ path từ góc top-left → center
-│   ├── Path_P1 (Path2D)   ← vẽ path từ góc top-right → center
-│   ├── Path_P2 (Path2D)   ← vẽ path từ góc bottom-left → center
-│   └── Path_P3 (Path2D)   ← vẽ path từ góc bottom-right → center
-├── PathVisual (Node2D)    ← vẽ path bằng Line2D (màu vàng/be)
-│   ├── PathLine_P0 (Line2D) [width=40, color=#e8d08a]
-│   ├── PathLine_P1 (Line2D)
-│   ├── PathLine_P2 (Line2D)
-│   └── PathLine_P3 (Line2D)
-├── Towers (Node2D)
-│   ├── Tower_01 (NeutralTower) [position: trên path P0]
-│   ├── Tower_02 (NeutralTower) [position: trên path P0]
-│   ├── Tower_03 (NeutralTower) [position: trên path P1]
-│   ├── Tower_04 (NeutralTower) [position: trên path P1]
-│   ├── Tower_05 (NeutralTower) [position: trên path P2]
-│   ├── Tower_06 (NeutralTower) [position: trên path P2]
-│   ├── Tower_07 (NeutralTower) [position: trên path P3]
-│   └── Tower_08 (NeutralTower) [position: trên path P3]
-└── SpawnedUnits (Node2D)  ← container runtime cho units
+|-- Background
+|-- PathVisual
+|   |-- PathLine_P0
+|   |-- PathLine_P1
+|   |-- PathLine_P2
+|   +-- PathLine_P3
+|-- BaseMarkers / Castles
+|   |-- CastleMarker_P0
+|   |-- CastleMarker_P1
+|   |-- CastleMarker_P2
+|   +-- CastleMarker_P3
++-- SpawnedUnits
 ```
 
-### Unit.tscn (base, không dùng trực tiếp)
+Neu can luu marker tower cho optional mode, dat ten ro:
+
+```text
+OptionalTowerMarkers (Node2D) [hidden or editor-only]
 ```
+
+Khong instance `NeutralTower` trong scene base mode.
+
+---
+
+## 5. UI BALL PANEL SCENES
+
+### BallPanel.tscn
+
+```text
+BallPanel (Node2D or Control) [script: BallPanel.gd]
+|-- Background
+|-- BallSpawnPoint
+|-- BallContainer
+|-- RewardSlots
+|   |-- Slot_Scout
+|   |-- Slot_Soldier
+|   |-- Slot_Tank
+|   |-- Slot_Mage
+|   +-- Slot_X2
++-- CounterLabels
+```
+
+Exports:
+
+```gdscript
+@export var player_id: int = 0
+@export var panel_rect: Rect2
+@export var ball_scene: PackedScene
+```
+
+### PanelBall.tscn
+
+```text
+PanelBall (Area2D or CharacterBody2D) [script: PanelBall.gd]
+|-- Body (Polygon2D or ColorRect primitive)
++-- CollisionShape2D
+```
+
+### RewardSlot.tscn
+
+```text
+RewardSlot (Area2D) [script: RewardSlot.gd]
+|-- Background (ColorRect/Polygon2D)
+|-- Label
++-- CollisionShape2D
+```
+
+---
+
+## 6. PLAYERBASE / CASTLE SCENE
+
+```text
+PlayerBase (Area2D) [script: PlayerBase.gd]
+|-- Body
+|-- CollisionShape2D
+|-- SpawnPoint
+|-- HPBar
++-- QueueLabel
+```
+
+Vai tro:
+- HP castle.
+- Queue reward/unit.
+- Spawn unit theo cooldown.
+- Goi AI de lay route.
+
+Ten `PlayerBase` co the giu de tranh doi file nhieu, nhung tai lieu coi no la castle.
+
+---
+
+## 7. UNIT SCENES
+
+```text
 Unit (CharacterBody2D) [script: Unit.gd]
-├── Body (Polygon2D)              ← Jelly Blob primitive
-├── LeftEye (Polygon2D)           ← mắt trắng nhỏ
-├── RightEye (Polygon2D)          ← mắt trắng nhỏ
-├── CollisionShape2D              ← CircleShape2D, radius theo unit_type
-└── Label                         ← hiển thị unit_type
+|-- Body (Polygon2D)
+|-- LeftEye (Polygon2D)
+|-- RightEye (Polygon2D)
+|-- CollisionShape2D
+|-- DetectionArea
+|-- HPBar
++-- Label
 ```
 
-### Scout.tscn (inherits Unit.tscn)
-```
-Scout (Unit) [extends Unit.tscn]
-  max_hp = 20
-  move_speed = 190    ← nhanh nhất
-  unit_type = "Scout"
-  visual radius = 18
+Unit variants:
+
+```text
+Scout.tscn
+Soldier.tscn
+Tank.tscn
+Mage.tscn
 ```
 
-### Soldier.tscn
-```
-Soldier (Unit)
-  max_hp = 50
-  move_speed = 140
-  unit_type = "Soldier"
-  visual radius = 24
+Tat ca van dung Jelly Blob primitive trong prototype.
+
+---
+
+## 8. MAP COORDINATE REFERENCE
+
+```text
+Map area: x=192..1088, y=0..720
+Map size: 896x720
+
+P0 castle: Vector2(304, 134)
+P1 castle: Vector2(976, 134)
+P2 castle: Vector2(304, 586)
+P3 castle: Vector2(976, 586)
+Center:    Vector2(640, 360)
 ```
 
-### Tank.tscn
-```
-Tank (Unit)
-  max_hp = 150
-  move_speed = 85     ← chậm nhất
-  unit_type = "Tank"
-  visual radius = 30
-```
+Side panels:
 
-### Mage.tscn
-```
-Mage (Unit)
-  max_hp = 30
-  move_speed = 115
-  unit_type = "Mage"
-  visual radius = 22
-```
-
-### NeutralTower.tscn
-```
-NeutralTower (StaticBody2D) [script: NeutralTower.gd]
-├── Sprite (ColorRect) [size: 24×24, color: #888888]
-├── CollisionShape2D (RectShape 24×24)
-├── RangeArea (Area2D)
-│   └── CollisionShape2D (CircleShape r=100)
-└── HPBar (ProgressBar) [size: 30×4]
-```
-
-### PlayerPanel.tscn
-```
-PlayerPanel (PanelContainer) [size: 200×240]
-├── VBoxContainer
-│   ├── ScoreLabel (Label) ← số lớn (score/wave)
-│   ├── GoldBar (ProgressBar) [max=50] ← visualize gold
-│   ├── GoldLabel (Label) ← "Gold: XX/50"
-│   └── UnitCountContainer (HBoxContainer)
-│       ├── Scout_Count (Label) ← "S: X/30"
-│       ├── Soldier_Count (Label)
-│       ├── Tank_Count (Label)
-│       └── Mage_Count (Label)
-└── [script: PlayerPanel.gd]
-    └── [export] player_id: int
-```
-
-### HUD.tscn
-```
-HUD (Control) [anchor: full rect]
-├── TimerContainer (HBoxContainer) [position: top-left]
-│   ├── TimerLabel (Label) ← "00:08 / 01:15"
-│   └── RoundLabel (Label) ← "Round 3"
-└── [script: HUD.gd]
+```text
+Left panel width: 192
+Right panel starts: x=1088
 ```
 
 ---
 
-## 4. MAP COORDINATE REFERENCE
+## 9. PHYSICS LAYERS
 
-Với resolution 1280×720, map chiếm phần giữa (trừ 200px hai bên cho panels):
-
-```
-Map area: x=200 to x=1080, y=0 to y=720
-Map size: 880 × 720
-
-Base positions (approximate):
-  Player 0 (top-left):     Vector2(280, 80)
-  Player 1 (top-right):    Vector2(1000, 80)
-  Player 2 (bottom-left):  Vector2(280, 640)
-  Player 3 (bottom-right): Vector2(1000, 640)
-
-Center:                    Vector2(640, 360)
-
-Path waypoints P0 (top-left → center):
-  [Vector2(280,80), Vector2(320,150), Vector2(400,200), 
-   Vector2(480,280), Vector2(560,320), Vector2(640,360)]
-
-Path waypoints P1 (top-right → center):
-  [Vector2(1000,80), Vector2(960,150), Vector2(880,200),
-   Vector2(800,280), Vector2(720,320), Vector2(640,360)]
-
-(P2, P3 tương tự nhưng từ dưới lên)
-```
-
----
-
-## 5. PHYSICS LAYERS SETUP
-
-Project Settings → Layer Names → 2D Physics:
-```
+```text
 Layer 1: world
 Layer 2: units
 Layer 3: unit_detection
-Layer 4: bases
-Layer 5: towers
+Layer 4: castles
+Layer 5: panel_balls
+Layer 6: reward_slots
+Layer 7: optional_towers
 ```
 
-Unit CollisionShape:
-- Layer: 2 (units)
-- Mask: 2 (va chạm với units khác)
+`optional_towers` chi dung khi bat Neutral Tower mode.
 
-Unit DetectionArea:
-- Layer: 3
-- Mask: 2 (detect units)
+---
 
-PlayerBase:
-- Layer: 4
-- Mask: 2 (detect units entering)
+## 10. TEST SCENES
 
-Tower RangeArea:
-- Layer: 5
-- Mask: 2 (detect units in range)
+```text
+TestUnits.tscn       -> unit movement/combat visual
+TestMapPath.tscn     -> map positions/path visual
+TestBallPanel.tscn   -> ball hits reward slots
+TestCastleQueue.tscn -> reward queue -> castle spawn
+Main.tscn            -> integrated base mode
+```
+
+Moi phase nen co mini test rieng truoc khi noi vao `Main.tscn`.

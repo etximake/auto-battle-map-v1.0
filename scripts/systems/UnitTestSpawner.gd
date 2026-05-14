@@ -8,27 +8,31 @@ extends Node2D
 
 var test_paths: Dictionary = {
 	0: [
-		Vector2(280, 80),
-		Vector2(400, 200),
-		Vector2(560, 320),
+		Vector2(304, 134),
+		Vector2(375, 189),
+		Vector2(477, 309),
+		Vector2(579, 360),
 		Vector2(640, 360),
 	],
 	1: [
-		Vector2(1000, 80),
-		Vector2(880, 200),
-		Vector2(720, 320),
+		Vector2(976, 134),
+		Vector2(905, 189),
+		Vector2(803, 309),
+		Vector2(701, 357),
 		Vector2(640, 360),
 	],
 	2: [
-		Vector2(280, 640),
-		Vector2(400, 520),
-		Vector2(560, 400),
+		Vector2(304, 586),
+		Vector2(375, 523),
+		Vector2(477, 411),
+		Vector2(579, 363),
 		Vector2(640, 360),
 	],
 	3: [
-		Vector2(1000, 640),
-		Vector2(880, 520),
-		Vector2(720, 400),
+		Vector2(976, 586),
+		Vector2(905, 523),
+		Vector2(803, 411),
+		Vector2(701, 360),
 		Vector2(640, 360),
 	],
 }

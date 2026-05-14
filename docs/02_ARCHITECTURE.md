@@ -1,283 +1,220 @@
-# ARCHITECTURE — Godot 4.5 Project Structure
-## Auto Battle TD Simulator
+# ARCHITECTURE - Godot 4.5
+## Ball-Drop Auto Battle Castle Simulator
 
 ---
 
-## 1. CÂY THƯ MỤC PROJECT
+## 1. DINH HUONG KIEN TRUC
 
+Project da pivot sang base mode moi:
+
+```text
+Ball Panel -> Reward Slot -> Castle Queue -> Castle Spawn -> AI Route -> Auto Battle
 ```
+
+Neutral tower khong nam trong base mode. File tower hien co duoc giu trong `scenes/towers/` va `scripts/towers/` de lam optional mode sau.
+
+---
+
+## 2. PROJECT TREE MUC TIEU
+
+```text
 res://
-├── project.godot
-├── autoloads/
-│   ├── GameConfig.gd          # Cấu hình toàn cục (player count, round time...)
-│   ├── GameState.gd           # State machine toàn cục
-│   └── EventBus.gd            # Signal bus trung tâm
-├── scenes/
-│   ├── main/
-│   │   └── Main.tscn          # Scene gốc, chứa tất cả
-│   ├── map/
-│   │   ├── GameMap.tscn       # Bản đồ + path + towers
-│   │   └── Path.tscn          # Path2D component
-│   ├── players/
-│   │   ├── PlayerBase.tscn    # Base của mỗi player (HP, spawn point)
-│   │   └── PlayerPanel.tscn   # UI panel góc màn hình
-│   ├── units/
-│   │   ├── Unit.tscn          # Unit base scene
-│   │   ├── Scout.tscn
-│   │   ├── Soldier.tscn
-│   │   ├── Tank.tscn
-│   │   └── Mage.tscn
-│   ├── towers/
-│   │   └── NeutralTower.tscn
-│   └── ui/
-│       ├── HUD.tscn           # Timer, round counter
-│       └── RoundResult.tscn   # Bảng kết quả cuối round
-├── scripts/
-│   ├── autoloads/
-│   │   ├── GameConfig.gd
-│   │   ├── GameState.gd
-│   │   └── EventBus.gd
-│   ├── map/
-│   │   └── GameMap.gd
-│   ├── players/
-│   │   ├── PlayerBase.gd
-│   │   ├── PlayerPanel.gd
-│   │   └── AIController.gd    # Logic AI mua unit
-│   ├── units/
-│   │   ├── Unit.gd            # Base class
-│   │   ├── UnitData.gd        # Resource: stats config
-│   │   └── UnitCombat.gd      # Combat logic
-│   ├── towers/
-│   │   └── NeutralTower.gd
-│   └── systems/
-│       ├── RoundManager.gd    # Quản lý round, timer
-│       ├── SpawnManager.gd    # Spawn unit
-│       ├── ResourceManager.gd # Gold tick
-│       └── ScoreManager.gd    # Tính điểm
-└── resources/
-    ├── unit_configs/
-    │   ├── scout_data.tres
-    │   ├── soldier_data.tres
-    │   ├── tank_data.tres
-    │   └── mage_data.tres
-    └── player_configs/
-        └── default_config.tres
+|-- project.godot
+|-- scenes/
+|   |-- main/
+|   |   |-- Main.tscn
+|   |   |-- TestMapPath.tscn
+|   |   |-- TestPhase4AI.tscn        # legacy test, se thay bang test reward/castle
+|   |   +-- TestUnits.tscn
+|   |-- map/
+|   |   +-- GameMap.tscn
+|   |-- players/
+|   |   +-- PlayerBase.tscn          # refactor thanh castle role
+|   |-- units/
+|   |   |-- Unit.tscn
+|   |   |-- Scout.tscn
+|   |   |-- Soldier.tscn
+|   |   |-- Tank.tscn
+|   |   +-- Mage.tscn
+|   |-- ui/
+|   |   |-- BallPanel.tscn
+|   |   |-- PanelBall.tscn
+|   |   |-- RewardSlot.tscn
+|   |   |-- PlayerPanel.tscn
+|   |   +-- HUD.tscn
+|   +-- towers/
+|       +-- NeutralTower.tscn        # optional mode only
+|-- scripts/
+|   |-- autoloads/
+|   |   |-- GameConfig.gd
+|   |   |-- GameState.gd
+|   |   +-- EventBus.gd
+|   |-- map/
+|   |   +-- GameMap.gd
+|   |-- players/
+|   |   |-- PlayerBase.gd            # castle queue/spawn role
+|   |   +-- AIController.gd          # route/target decision
+|   |-- units/
+|   |   +-- Unit.gd
+|   |-- ui/
+|   |   |-- BallPanel.gd
+|   |   |-- PanelBall.gd
+|   |   +-- RewardSlot.gd
+|   |-- systems/
+|   |   |-- RewardManager.gd
+|   |   |-- SpawnManager.gd
+|   |   |-- RoundManager.gd
+|   |   +-- ScoreManager.gd
+|   +-- towers/
+|       +-- NeutralTower.gd          # optional mode only
++-- docs/
 ```
+
+`ResourceManager.gd` neu con ton tai thi la legacy cua gold-buy prototype, khong phai core cua base mode.
 
 ---
 
-## 2. SCENE HIERARCHY (Main.tscn)
+## 3. MAIN SCENE HIERARCHY MUC TIEU
 
-```
+```text
 Main (Node2D)
-├── GameMap (Node2D)
-│   ├── TileMapLayer (ground)
-│   ├── Paths (Node2D)
-│   │   ├── Path_P1_to_P2 (Path2D)
-│   │   ├── Path_P3_to_P4 (Path2D)
-│   │   ├── Path_P1_to_P3 (Path2D)  [optional cross paths]
-│   │   └── Path_P2_to_P4 (Path2D)
-│   ├── Towers (Node2D)
-│   │   ├── Tower_01 (NeutralTower)
-│   │   ├── Tower_02
-│   │   └── ... (8 towers total)
-│   └── SpawnedUnits (Node2D)        [container cho units runtime]
-│
-├── Players (Node2D)
-│   ├── Player_1 (PlayerBase)
-│   ├── Player_2 (PlayerBase)
-│   ├── Player_3 (PlayerBase)
-│   └── Player_4 (PlayerBase)
-│
-├── UI (CanvasLayer)
-│   ├── HUD (Control)
-│   │   ├── TimerLabel
-│   │   └── RoundLabel
-│   ├── Panel_P1 (PlayerPanel) [góc trên trái]
-│   ├── Panel_P2 (PlayerPanel) [góc trên phải]
-│   ├── Panel_P3 (PlayerPanel) [góc dưới trái]
-│   └── Panel_P4 (PlayerPanel) [góc dưới phải]
-│
-└── Systems (Node)               [invisible managers]
-    ├── RoundManager
-    ├── SpawnManager
-    ├── ResourceManager
-    └── ScoreManager
+|-- GameMap (Node2D)
+|   |-- Background
+|   |-- Paths
+|   |-- BaseMarkers / Castles
+|   +-- SpawnedUnits
+|-- Players (Node2D)
+|   |-- Player_0
+|   |   |-- PlayerBase or PlayerCastle
+|   |   +-- AIController
+|   |-- Player_1
+|   |-- Player_2
+|   +-- Player_3
+|-- Systems (Node)
+|   |-- RewardManager
+|   |-- SpawnManager
+|   |-- RoundManager
+|   +-- ScoreManager
++-- UI (CanvasLayer)
+    |-- BallPanel_P0
+    |-- BallPanel_P1
+    |-- BallPanel_P2
+    |-- BallPanel_P3
+    |-- HUD
+    +-- ResultPanel
 ```
+
+Khong dat `Towers` active trong base mode.
 
 ---
 
-## 3. AUTOLOAD / SINGLETON
+## 4. AUTOLOADS
 
-### GameConfig.gd
+### GameConfig
+
+Chua cau hinh toan cuc:
+- `player_count`
+- `player_colors`
+- `round_duration`
+- `time_scale`
+- `panel_ball_spawn_interval`
+- `castle_spawn_cooldown`
+- `max_units_per_player`
+- `ai_strategies`
+
+Gold config chi giu neu can legacy/optional mode.
+
+### GameState
+
+State goi y:
+
 ```gdscript
-# Đây là nơi thay đổi config khi quay video khác nhau
-extends Node
-
-# Player settings
-var player_count: int = 4
-var player_colors: Array[Color] = [
-    Color(0.9, 0.2, 0.2),   # Red
-    Color(0.2, 0.4, 0.9),   # Blue
-    Color(0.2, 0.8, 0.2),   # Green
-    Color(0.9, 0.8, 0.1),   # Yellow
-    Color(0.1, 0.8, 0.8),   # Cyan
-    Color(0.6, 0.2, 0.8),   # Purple
-]
-
-# Round settings
-var round_duration: float = 75.0
-var rounds_per_session: int = 10
-var auto_restart: bool = true
-
-# Economy settings
-var gold_per_second: float = 5.0
-var gold_max: int = 50
-var starting_gold: int = 10
-
-# Simulation speed
-var time_scale: float = 1.0
-
-# AI strategies per player (index matches player index)
-var ai_strategies: Array[String] = [
-    "AGGRESSIVE", "BALANCED", "ECONOMY", "ADAPTIVE"
-]
-```
-
-### GameState.gd
-```gdscript
-extends Node
-
 enum State { IDLE, ROUND_ACTIVE, ROUND_END, SESSION_END }
-
-signal state_changed(new_state: State)
-signal round_started(round_number: int)
-signal round_ended(results: Dictionary)
-
-var current_state: State = State.IDLE
-var current_round: int = 0
-var session_scores: Dictionary = {}  # player_id → total score
-
-func change_state(new_state: State) -> void:
-    current_state = new_state
-    state_changed.emit(new_state)
 ```
 
-### EventBus.gd
+### EventBus
+
+Signal trung tam giua UI panel, reward, castle, unit va round.
+
 ```gdscript
-extends Node
-
-# Unit events
-signal unit_spawned(unit: Unit, player_id: int)
-signal unit_died(unit: Unit, killer_player_id: int)
-signal unit_reached_base(unit: Unit, target_base: PlayerBase)
-
-# Combat events
-signal base_damaged(base: PlayerBase, amount: float, attacker_player: int)
-signal base_destroyed(base: PlayerBase)
-
-# Resource events
-signal gold_changed(player_id: int, new_amount: float)
-
-# Round events
-signal tower_attacked(tower: NeutralTower, target: Unit)
+signal reward_generated(player_id: int, reward_type: String)
+signal reward_queued(player_id: int, reward_type: String)
+signal castle_spawn_requested(player_id: int, unit_type: String)
+signal unit_spawned(unit: Node, player_id: int)
+signal unit_died(unit: Node, killer_player_id: int)
+signal unit_reached_castle(unit: Node, target_castle: Node)
+signal castle_damaged(castle: Node, amount: float, attacker_player: int)
+signal castle_destroyed(castle: Node)
+signal round_reset_requested()
 ```
 
 ---
 
-## 4. NODE TYPES & ROLES
+## 5. NODE ROLES
 
-| Node | Type | Script | Vai trò |
+| Node | Type | Script | Vai tro |
 |---|---|---|---|
-| Main | Node2D | - | Root, khởi tạo |
-| GameMap | Node2D | GameMap.gd | Chứa map, paths, towers |
-| PlayerBase | Area2D | PlayerBase.gd | Base HP, spawn point, detect unit vào |
-| PlayerPanel | Control | PlayerPanel.gd | Hiển thị gold, unit count, score |
-| Unit | CharacterBody2D | Unit.gd | Di chuyển, combat |
-| NeutralTower | StaticBody2D | NeutralTower.gd | Auto-attack units |
-| AIController | Node | AIController.gd | Logic mua unit của mỗi player |
-| RoundManager | Node | RoundManager.gd | Timer, round flow |
-| SpawnManager | Node | SpawnManager.gd | Factory spawn unit |
-| ResourceManager | Node | ResourceManager.gd | Gold tick mỗi giây |
-| ScoreManager | Node | ScoreManager.gd | Tính & lưu điểm |
+| Main | Node2D | Main.gd | Bootstrap va wiring |
+| GameMap | Node2D | GameMap.gd | Map, castle positions, route/path data |
+| BallPanel | Control/Node2D | BallPanel.gd | Sinh ball va quan ly slots cua player |
+| PanelBall | Area2D/CharacterBody2D | PanelBall.gd | Ball roi trong panel, cham reward slot |
+| RewardSlot | Area2D/Control | RewardSlot.gd | Tao reward khi ball cham |
+| RewardManager | Node | RewardManager.gd | Nhan reward, dua vao castle queue |
+| PlayerBase/Castle | Area2D | PlayerBase.gd | HP, queue, spawn cooldown |
+| AIController | Node | AIController.gd | Chon route/target cho unit |
+| SpawnManager | Node | SpawnManager.gd | Factory/object pool spawn unit |
+| Unit | CharacterBody2D | Unit.gd | Move, combat, die/reach castle |
+| ScoreManager | Node | ScoreManager.gd | Score round/session |
+| NeutralTower | StaticBody2D | NeutralTower.gd | Optional mode only |
 
 ---
 
-## 5. DATA FLOW
+## 6. DATA FLOW BASE MODE
 
-```
-ResourceManager
-    → gold_changed (EventBus)
-        → AIController [nhận gold, quyết định mua]
-            → SpawnManager.spawn_unit(player_id, unit_type)
-                → Unit instance tạo ra
-                    → Unit.follow_path()
-                        → Unit.detect_enemies()
-                            → UnitCombat.attack()
-                                → Unit.die() → EventBus.unit_died
-                    → Unit.reach_base()
-                        → EventBus.base_damaged
-                            → PlayerBase.take_damage()
-                                → EventBus.base_destroyed (nếu HP = 0)
-                                    → RoundManager.end_round()
+```text
+BallPanel
+  -> PanelBall hits RewardSlot
+  -> EventBus.reward_generated(player_id, reward_type)
+  -> RewardManager queues reward to player's castle
+  -> PlayerCastle stores reward in queue
+  -> PlayerCastle spawn cooldown pops unit reward
+  -> AIController chooses route/target
+  -> SpawnManager.spawn_unit(player_id, unit_type, route)
+  -> Unit follows route and fights enemies
+  -> Unit reaches enemy castle
+  -> castle_damaged / score update
+  -> RoundManager ends or resets round
 ```
 
 ---
 
-## 6. PATH SYSTEM
+## 7. MAP & ROUTE MODEL
 
-### Cách implement path trong Godot 4.5:
+Hien tai path dang la waypoint array. Huong sap toi:
 
 ```gdscript
-# Mỗi unit dùng PathFollow2D approach
-# Nhưng vì nhiều unit cùng lúc, dùng waypoint system thay thế
-
-# Trong Unit.gd:
-var waypoints: Array[Vector2] = []
-var current_waypoint_index: int = 0
-var move_speed: float = 80.0
-
-func _physics_process(delta):
-    if current_waypoint_index >= waypoints.size():
-        _reach_destination()
-        return
-    
-    var target = waypoints[current_waypoint_index]
-    var direction = (target - global_position).normalized()
-    velocity = direction * move_speed
-    
-    if global_position.distance_to(target) < 8.0:
-        current_waypoint_index += 1
-    
-    move_and_slide()
-```
-
-### Path Definition (trong GameMap.gd):
-```gdscript
-# Waypoints cho từng path, define bằng tay hoặc lấy từ Path2D
-func get_path_for_player(from_player: int, to_player: int) -> Array[Vector2]:
-    # Return array of Vector2 waypoints
+func get_route(player_id: int, target_player_id: int, route_id: String = "main") -> Array[Vector2]:
     pass
 ```
 
----
+Base mode can nhieu route/target de AI co vai tro that:
+- attack opposite castle
+- attack nearest castle
+- defend center lane
+- split route neu map co nhanh
 
-## 7. COLLISION LAYERS
-
-| Layer | Tên | Dùng cho |
-|---|---|---|
-| 1 | world | Tường, obstacles |
-| 2 | units | Unit bodies |
-| 3 | unit_detection | Unit attack range (Area2D) |
-| 4 | bases | PlayerBase areas |
-| 5 | towers | Tower attack range |
+`get_march_path(player_id)` co the giu lam fallback tam thoi.
 
 ---
 
-## 8. PERFORMANCE NOTES (quan trọng cho simulation)
+## 8. OPTIONAL MODES
 
-- Dùng **object pooling** cho units (tránh instantiate/free liên tục)
-- Mỗi unit chỉ check combat mỗi 0.2s (không phải mỗi frame)
-- **Tối đa units trên map**: Config được, mặc định 50/player
-- Nếu lag: tăng `Engine.physics_ticks_per_second` hoặc giảm unit cap
-- Dùng `call_deferred()` khi free unit trong physics process
+### Neutral Tower Mode
+
+Bat lai:
+- `NeutralTower.tscn`
+- `NeutralTower.gd`
+- `optional_tower_positions`
+- group `"towers"`
+
+Dieu kien: khong anh huong base mode va khong duoc dat active mac dinh trong `Main.tscn`.
