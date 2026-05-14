@@ -27,6 +27,12 @@ res://scripts/autoloads/EventBus.gd   -> EventBus
 ```text
 AutoBattleTD/
 |-- project.godot
+|-- configs/
+|   |-- default_game_config.json
+|   +-- presets/
+|       |-- fast_rounds.json
+|       |-- heavy_units.json
+|       +-- chaos_balls.json
 |-- scenes/
 |   |-- main/
 |   |   |-- Main.tscn
@@ -281,3 +287,22 @@ Main.tscn            -> integrated base mode
 ```
 
 Moi phase nen co mini test rieng truoc khi noi vao `Main.tscn`.
+
+---
+
+## 11. CONFIG FILES
+
+Project config:
+
+```text
+configs/default_game_config.json
+configs/presets/*.json
+```
+
+User override:
+
+```text
+user://game_config_override.json
+```
+
+Khong de systems doc JSON truc tiep. Tat ca doc qua `GameConfig`.

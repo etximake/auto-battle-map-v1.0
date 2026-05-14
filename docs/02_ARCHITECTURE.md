@@ -20,6 +20,9 @@ Neutral tower khong nam trong base mode. File tower hien co duoc giu trong `scen
 ```text
 res://
 |-- project.godot
+|-- configs/
+|   |-- default_game_config.json
+|   +-- presets/
 |-- scenes/
 |   |-- main/
 |   |   |-- Main.tscn
@@ -123,6 +126,19 @@ Chua cau hinh toan cuc:
 - `ai_strategies`
 
 Gold config chi giu neu can legacy/optional mode.
+
+GameConfig phai tien toi JSON-driven config:
+
+```text
+safe defaults in GameConfig.gd
+  -> res://configs/default_game_config.json
+  -> user://game_config_override.json
+  -> validation/clamp
+```
+
+Systems khong doc JSON truc tiep. Tat ca doc qua `GameConfig`.
+
+Config schema chi tiet: `docs/07_CONFIG_SCHEMA.md`.
 
 ### GameState
 

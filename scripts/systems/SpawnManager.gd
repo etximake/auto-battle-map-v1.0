@@ -17,13 +17,15 @@ var active_units: Array[Node] = []
 
 
 func _ready() -> void:
+	add_to_group("spawn_managers")
+	max_units_per_player = GameConfig.max_units_per_player
 	EventBus.round_reset_requested.connect(clear_all_units)
 	EventBus.unit_died.connect(_on_unit_removed)
-	EventBus.unit_reached_base.connect(_on_unit_reached_base)
+	EventBus.unit_reached_castle.connect(_on_unit_reached_castle)
 	_init_pool()
 
 
-func spawn_unit(player_id: int, unit_type: String) -> Node:
+func spawn_unit(player_id: int, unit_type: String, route_points: Array[Vector2] = []) -> Node:
 	if _count_player_units(player_id) >= max_units_per_player:
 		return null
 
@@ -32,7 +34,9 @@ func spawn_unit(player_id: int, unit_type: String) -> Node:
 		return null
 
 	var unit: Node = _get_unit(unit_type)
-	var unit_path := _get_path_for_player(player_id)
+	var unit_path: Array[Vector2] = route_points.duplicate()
+	if unit_path.is_empty():
+		unit_path = _get_path_for_player(player_id)
 	if unit_path.is_empty():
 		push_error("No march path for player %d." % player_id)
 		return null
@@ -50,6 +54,7 @@ func return_to_pool(unit: Node) -> void:
 
 	active_units.erase(unit)
 	unit.remove_from_group("units")
+	unit.set_physics_process(false)
 	unit.hide()
 	unit.process_mode = Node.PROCESS_MODE_DISABLED
 	var unit_type := String(unit.get("unit_type"))
@@ -127,8 +132,8 @@ func _count_player_units(player_id: int) -> int:
 
 
 func _on_unit_removed(unit: Node, _killer_player_id: int) -> void:
-	return_to_pool(unit)
+	call_deferred("return_to_pool", unit)
 
 
-func _on_unit_reached_base(unit: Node, _target_base: Node) -> void:
-	return_to_pool(unit)
+func _on_unit_reached_castle(unit: Node, _target_base: Node) -> void:
+	call_deferred("return_to_pool", unit)

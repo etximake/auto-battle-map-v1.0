@@ -24,6 +24,7 @@ Tech:
 - Prototype dung primitive nodes, chua dung sprite/image asset that.
 - Khong dung Input.*.
 - Moi GDScript file nen duoi 200 dong.
+- Tham so gameplay phai tien toi JSON config qua GameConfig, khong hardcode them tham so moi neu co the config duoc.
 
 Base mode:
 Ball Panel -> Reward Slot -> RewardManager -> Castle Queue -> Castle Spawn -> AI Route -> Auto Battle.
@@ -68,6 +69,17 @@ GameState
 EventBus
 ```
 
+Config load direction:
+
+```text
+GameConfig safe defaults
+  -> res://configs/default_game_config.json
+  -> user://game_config_override.json
+  -> validate / clamp
+```
+
+Config schema: `docs/07_CONFIG_SCHEMA.md`.
+
 EventBus target signals:
 
 ```gdscript
@@ -85,6 +97,22 @@ signal round_reset_requested()
 ---
 
 ## TASK PROMPTS
+
+### Task 0: Add JSON config foundation
+
+```text
+Cap nhat GameConfig.gd de load JSON config cho Godot 4.5.
+Load order:
+1. Safe defaults trong GameConfig.gd
+2. res://configs/default_game_config.json neu ton tai
+3. user://game_config_override.json neu ton tai
+4. validate/clamp
+
+Tao configs/default_game_config.json theo docs/07_CONFIG_SCHEMA.md.
+Khong de BallPanel/Unit/SpawnManager parse JSON truc tiep.
+Game systems chi doc qua GameConfig.
+Neu JSON loi, game khong crash; push_warning va dung fallback.
+```
 
 ### Task 1: Reconcile GameMap base mode
 

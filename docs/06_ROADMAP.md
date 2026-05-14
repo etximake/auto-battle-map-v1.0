@@ -29,16 +29,20 @@ Quyết định quan trọng:
 - `GameMap` scale theo SVG mục tiêu về 1280x720.
 - `Unit` có movement/combat cơ bản.
 - `PlayerBase` đang đóng vai castle tạm thời.
-- `ResourceManager`, `SpawnManager`, `AIController` đang theo logic cũ: AI mua unit bằng gold.
+- `ResourceManager` vẫn giữ cho optional/legacy, nhưng base mode không còn dùng AI mua unit bằng gold.
+- `SpawnManager` nhận spawn request từ castle queue và có thể nhận route từ AI.
+- `AIController` đã chuyển sang chọn target/route cho unit sau khi castle spawn.
 - `NeutralTower` đã có và đã được bỏ khỏi base gameplay; file vẫn giữ cho optional mode.
 - `EventBus` đã có reward/castle signals để chuẩn bị Ball Panel Prototype.
 - `BallPanel`, `PanelBall`, `RewardSlot` prototype đã có và emit được `reward_generated`.
+- JSON config foundation đã được implement trong `GameConfig`; `BallPanel` đã đọc tham số từ config.
+- Reward từ `BallPanel` đã đi vào castle queue và castle đã spawn unit qua `SpawnManager`.
 
 Cần sửa hướng:
 - Tắt/remove neutral towers khỏi `GameMap` base mode. [x]
-- Thêm `BallPanel`, `RewardSlot`, `CastleQueue`. [BallPanel/RewardSlot done, CastleQueue pending]
-- Refactor `AIController` để chọn route/target, không trực tiếp mua unit.
-- Refactor `SpawnManager` để spawn từ castle queue/reward.
+- Thêm `BallPanel`, `RewardSlot`, `CastleQueue`. [x]
+- Refactor `AIController` để chọn route/target, không trực tiếp mua unit. [x]
+- Refactor `SpawnManager` để spawn từ castle queue/reward. [x]
 
 ---
 
@@ -49,12 +53,14 @@ Cần sửa hướng:
 | 0 | Foundation | Project, autoload, primitive unit | Hoàn thành |
 | 1 | Map Base | Map/castle/path theo SVG, không tower core | Hoàn thành |
 | 2 | Ball Panel Prototype | Panel màu, ball rơi, reward slot | Hoàn thành |
-| 3 | Castle Queue & Spawn | Reward vào castle, castle spawn unit | Chưa làm |
-| 4 | AI Route Decision | AI chọn route/target cho unit | Chưa làm |
-| 5 | Auto Battle Loop | Combat, castle damage, scoring cơ bản | Một phần đã có |
-| 6 | Round & UI | Timer, score, panels, reset loop | Chưa làm |
-| 7 | Optional Modes | Neutral tower/capture/hazard variants | Chưa làm |
-| 8 | Polish | Balance, visual clarity, YouTube ready | Chưa làm |
+| 3 | JSON Config Foundation | Load/validate config cho tham số gameplay | Hoàn thành |
+| 4 | Castle Queue & Spawn | Reward vào castle, castle spawn unit | Hoàn thành |
+| 5 | AI Route Decision | AI chọn route/target cho unit | Hoàn thành |
+| 5.5 | Unit Scale & Anti-Clog | Unit nho hon, body collision prototype off | Hoan thanh |
+| 6 | Auto Battle Loop | Combat, castle damage, scoring co ban | Hoan thanh |
+| 7 | Round & UI | Timer, score, panels, reset loop | Hoan thanh |
+| 8 | Optional Modes | Neutral tower/capture/hazard variants | Chưa làm |
+| 9 | Polish | Balance, visual clarity, YouTube ready | Chưa làm |
 
 ---
 
@@ -120,7 +126,38 @@ Implementation notes:
 
 ---
 
-## 5. Phase 3 - Castle Queue & Spawn
+## 5. Phase 3 - JSON Config Foundation
+
+Mục tiêu: các tham số gameplay chính có thể chỉnh bằng JSON config trước khi mở rộng castle/reward/AI.
+
+Files dự kiến:
+- `configs/default_game_config.json`
+- `configs/presets/`
+- Refactor `scripts/autoloads/GameConfig.gd`
+
+Checklist:
+- [x] Tạo `configs/default_game_config.json` theo `docs/07_CONFIG_SCHEMA.md`.
+- [x] `GameConfig.gd` có safe defaults.
+- [x] Load default JSON từ `res://configs/default_game_config.json`.
+- [x] Load override từ `user://game_config_override.json` nếu có.
+- [x] Validate/clamp player count, round, ball panel, unit, castle, limits.
+- [x] BallPanel đọc tham số từ `GameConfig` thay vì hardcode toàn bộ.
+- [x] JSON lỗi không crash game.
+- [x] Mini test: `TestBallPanel.tscn` chạy qua config và vẫn emit reward event.
+
+Deliverable:
+Config foundation sẵn sàng để người dùng/content creator chỉnh tham số mà không sửa code.
+
+Implementation notes:
+- Tạo `configs/default_game_config.json`.
+- Tạo `configs/presets/` để chứa preset về sau.
+- Refactor `scripts/autoloads/GameConfig.gd` thành JSON loader có safe defaults, merge config và validation.
+- `BallPanel.gd` đọc `spawn_interval`, `ball_speed`, `max_live_balls`, anchor settings, reward order và player colors từ `GameConfig`.
+- Verify Godot 4.5 headless: `TestBallPanel.tscn` và `Main.tscn` load không lỗi.
+
+---
+
+## 6. Phase 4 - Castle Queue & Spawn
 
 Mục tiêu: reward từ panel đi vào castle, castle spawn unit ra map.
 
@@ -130,77 +167,132 @@ Files dự kiến:
 - Refactor `SpawnManager.gd`.
 
 Checklist:
-- [ ] Castle có queue unit/item.
-- [ ] `RewardManager` nhận signal từ BallPanel.
-- [ ] Reward unit được đưa vào castle queue.
-- [ ] Castle spawn theo cooldown.
-- [ ] SpawnManager chỉ spawn khi castle/reward yêu cầu.
-- [ ] Tắt hoặc bỏ vai trò "AI mua unit bằng gold" trong base mode.
-- [ ] Mini test: ball hit Scout slot -> castle queue -> Scout spawn.
+- [x] Castle có queue unit/item.
+- [x] `RewardManager` nhận signal từ BallPanel.
+- [x] Reward unit được đưa vào castle queue.
+- [x] Castle spawn theo cooldown.
+- [x] SpawnManager chỉ spawn khi castle/reward yêu cầu trong base mode.
+- [x] Tắt hoặc bỏ vai trò "AI mua unit bằng gold" trong base mode.
+- [x] Mini test: ball hit Scout slot -> castle queue -> Scout spawn.
 
 Deliverable:
 Nguồn sinh quân đúng game mục tiêu.
 
+Implementation notes:
+- Tạo `scripts/systems/RewardManager.gd`.
+- Refactor `PlayerBase.gd` thành castle queue tạm thời với `queue_reward()`, `reward_queue`, `spawn_cooldown`, `queue_limit`.
+- `PlayerBase` đọc `castle_max_hp`, `castle_spawn_cooldown`, `castle_queue_limit` từ `GameConfig`.
+- `SpawnManager` vào group `spawn_managers` và đọc `max_units_per_player` từ `GameConfig`.
+- `Main.tscn` có `RewardManager`, 4 `BallPanel`, và AI gold-buy cũ đã `active=false`.
+- Tạo `TestCastleQueue.tscn` và `CastleQueueTestMonitor.gd`.
+- Verify Godot 4.5 headless: log có `reward_queued`, `castle_spawn_requested`, `unit_spawned`.
+
 ---
 
-## 6. Phase 4 - AI Route Decision
+## 7. Phase 5 - AI Route Decision
 
 Mục tiêu: AI quyết định hướng đi sau khi castle spawn unit.
 
 Checklist:
-- [ ] Refactor `AIController`: không còn `_buy_unit()`.
-- [ ] AI nhận câu hỏi từ castle/spawn: unit này nên đi route nào?
-- [ ] `GameMap` hỗ trợ nhiều route/target, không chỉ fixed opposite path.
-- [ ] Strategy:
+- [x] Refactor `AIController`: không còn `_buy_unit()`.
+- [x] AI nhận câu hỏi từ castle/spawn: unit này nên đi route nào?
+- [x] `GameMap` hỗ trợ nhiều route/target, không chỉ fixed opposite path.
+- [x] Strategy:
   - AGGRESSIVE: route ngắn/tấn công nhiều.
   - BALANCED: chia quân theo áp lực.
   - ECONOMY: giữ item/burst nếu có.
   - ADAPTIVE: đọc map state và đổi route.
-- [ ] Mini test: cùng một castle có thể spawn unit đi các hướng khác nhau.
+- [x] Mini test: cùng một castle có thể spawn unit đi các hướng khác nhau.
 
 Deliverable:
 AI điều khiển hướng chiến thuật, không điều khiển mua unit trực tiếp.
 
----
-
-## 7. Phase 5 - Auto Battle Loop
-
-Mục tiêu: hoàn thiện combat/castle damage/scoring cho base mode.
-
-Đã có một phần:
-- Unit movement/combat cơ bản.
-- PlayerBase nhận damage.
-- SpawnManager pool cơ bản.
-
-Cần làm:
-- [ ] Kiểm tra lại combat khi unit đông.
-- [ ] Unit vào castle địch gây score/damage rõ ràng.
-- [ ] ScoreManager tính điểm từ castle damage/reach.
-- [ ] Điều chỉnh unit stats cho video dễ xem.
-- [ ] Mini test 4 castle tự spawn từ panel và giao chiến.
-
-Deliverable:
-Loop auto battle xem được dù UI còn đơn giản.
+Implementation notes:
+- `AIController.gd` chuyển thành service chọn target/route, không tự mua unit bằng gold.
+- `GameMap.gd` thêm `get_route(from_player_id, target_player_id)` và `get_target_player_ids()`.
+- `PlayerBase.gd` hỏi AI route trước khi gọi `SpawnManager.spawn_unit()`.
+- `SpawnManager.gd` nhận route tùy chọn từ castle/AI, vẫn fallback về march path cũ nếu cần.
+- `TestCastleQueue.tscn` có 4 AI controller để test route decision.
+- Verify Godot 4.5 headless: `TestCastleQueue.tscn` log có `route_end`, `Main.tscn` load không lỗi.
 
 ---
 
-## 8. Phase 6 - Round & UI
+## 7.5. Phase 5.5 - Unit Scale & Anti-Clog
 
-Mục tiêu: simulation chạy liên tục để quay video.
+Muc tieu: giam tac duong prototype truoc khi test combat dong quan.
 
 Checklist:
-- [ ] RoundManager timer/reset.
-- [ ] HUD timer/round.
-- [ ] PlayerPanel hiển thị ball count/reward/score/castle HP.
-- [ ] Round result overlay tối thiểu.
-- [ ] Auto restart.
+- [x] Unit doc stats/size tu JSON config.
+- [x] Giam visual radius va collision radius cua Scout/Soldier/Tank/Mage.
+- [x] Tat body collision giua unit trong base prototype de unit khong day/chan nhau tren duong hep.
+- [x] Waypoint reach distance dua vao JSON config.
+- [x] Mini test: `TestCastleQueue.tscn` va `Main.tscn` load khong loi.
 
 Deliverable:
-Game tự chạy nhiều round, có UI đủ hiểu.
+Unit nho hon so voi duong line, khong bi body collision lam ket hang truoc khi vao Phase 6 combat.
+
+Implementation notes:
+- `default_game_config.json` them `visual_radius`, `collision_radius` cho tung unit.
+- `default_game_config.json` them `unit_behavior.body_collision_enabled=false` va `waypoint_distance=7.0`.
+- `Unit.gd` dung config cho stats/size/collision thay vi chi dung scene export.
 
 ---
 
-## 9. Phase 7 - Optional Modes
+## 8. Phase 6 - Auto Battle Loop
+
+Muc tieu: hoan thien combat/castle damage/scoring cho base mode.
+
+Da co:
+- Unit movement/combat co ban.
+- PlayerBase nhan castle damage.
+- SpawnManager pool co ban.
+- ScoreManager tinh diem co ban.
+
+Checklist:
+- [x] Kiem tra lai combat khi unit dong.
+- [x] Unit vao castle dich gay score/damage ro rang.
+- [x] ScoreManager tinh diem tu unit kill, castle damage, castle destroy.
+- [x] Dieu chinh unit stats/size qua JSON config de de xem hon.
+- [x] Mini test castle spawn, auto battle, score/damage event.
+
+Deliverable:
+Loop auto battle xem duoc du UI con don gian.
+
+Implementation notes:
+- `Unit.gd` emit `unit_reached_castle` khi unit di het route.
+- `PlayerBase.gd` dung castle signal moi, emit `castle_damaged`/`castle_destroyed`, va tranh destroy lap.
+- `ScoreManager.gd` tinh score tu unit kill, castle damage, castle destroy.
+- `default_game_config.json` them nhom `auto_battle` de tune damage/score.
+- `Main.tscn` co `ScoreManager`.
+- `TestAutoBattleLoop.tscn` xac thuc score/damage loop.
+- Verify Godot 4.5 headless: `TestAutoBattleLoop.tscn`, `TestCastleQueue.tscn`, `Main.tscn` khong loi.
+
+---
+
+## 9. Phase 7 - Round & UI
+
+Muc tieu: simulation chay lien tuc de quay video.
+
+Checklist:
+- [x] RoundManager timer/reset.
+- [x] HUD timer/round.
+- [x] HUD hien score va castle HP co ban.
+- [x] Round result overlay toi thieu.
+- [x] Auto restart.
+
+Deliverable:
+Game tu chay nhieu round, co UI du hieu.
+
+Implementation notes:
+- `RoundManager.gd` tu start round, dem nguoc, end round, restart theo config.
+- `RoundHud.gd` hien round timer, score, castle HP, va winner khi round end.
+- `Main.tscn` da gan `RoundManager` va `RoundHud`.
+- `TestRoundLoop.tscn` dung round duration ngan de test reset/restart.
+- Verify Godot 4.5 headless: `TestRoundLoop.tscn`, `Main.tscn`, `TestAutoBattleLoop.tscn` khong loi.
+
+---
+
+## 10. Phase 8 - Optional Modes
 
 Neutral tower chuyển sang mode phụ:
 
@@ -218,20 +310,21 @@ Biến thể gameplay để tạo nhiều video khác nhau.
 
 ---
 
-## 10. Backlog Ưu Tiên Gần Nhất
+## 11. Backlog Ưu Tiên Gần Nhất
 
-1. Tạo RewardManager/Castle queue.
-2. Refactor SpawnManager để nhận spawn request từ castle queue.
-3. Refactor AIController khỏi logic mua unit bằng gold.
+1. Bat dau chuan bi/thay asset that cho base mode: map, castle, unit, panel.
+2. Phase 8 neu muon them optional modes: neutral tower/capture outpost.
+3. Phase 9 polish: readability, VFX, SFX, YouTube-ready tuning.
 
 ---
 
-## 11. Quy Tắc Thiết Kế
+## 12. Quy Tắc Thiết Kế
 
 - Base mode phải bám loop ball-panel/castle-spawn.
 - Không dùng player input.
 - Không dùng asset thật khi còn prototype.
 - Neutral tower chỉ là optional mode.
 - Không mở rộng hệ gold-buy thành core gameplay.
+- Tham số gameplay mới nên đưa vào JSON config nếu có khả năng cần tune/user settings.
 - Mỗi bước phải có mini test scene hoặc test path rõ ràng.
 - GDScript file nên dưới 200 dòng.

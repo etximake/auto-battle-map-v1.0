@@ -211,3 +211,32 @@ Score nguồn:
 - Không cần sound/music.
 - Không cần networking.
 - Không cần tower trung lập trong base mode.
+
+---
+
+## CONFIG & USER TUNING
+
+Game cần được thiết kế để đổi tham số bằng JSON config thay vì sửa code.
+
+Config dự kiến điều khiển:
+- Player count, colors, AI strategies.
+- Round duration, time scale, auto restart.
+- Ball panel: spawn interval, speed, max live balls, anchor count, anchor radius, distance from reward slots.
+- Reward slots/order and x2 behavior.
+- Unit stats.
+- Castle HP, spawn cooldown, queue limit.
+- Unit caps/performance limits.
+- Optional modes such as neutral towers.
+
+Load order:
+
+```text
+GameConfig.gd safe defaults
+  -> res://configs/default_game_config.json
+  -> user://game_config_override.json
+  -> validate / clamp
+```
+
+UI settings menu chưa cần trong prototype gần nhất, nhưng architecture phải sẵn sàng cho user override.
+
+Chi tiết schema: `docs/07_CONFIG_SCHEMA.md`.

@@ -1,100 +1,131 @@
 extends Node
 
-const UNIT_COSTS := {
-	"Scout": 5.0,
-	"Soldier": 10.0,
-	"Mage": 15.0,
-	"Tank": 20.0,
-}
-
 @export var player_id: int = 0
 @export var strategy: String = "BALANCED"
-@export var think_interval: float = 0.5
-@export var active: bool = true
-@export var resource_manager_path: NodePath
+@export var active: bool = false
+@export var game_map_path: NodePath
 @export var spawn_manager_path: NodePath
 
-var think_timer: float = 0.0
 var balanced_index: int = 0
 
 
-func _process(delta: float) -> void:
-	if not active:
-		return
-
-	think_timer += delta
-	if think_timer < think_interval:
-		return
-
-	think_timer = 0.0
-	think()
+func _ready() -> void:
+	add_to_group("ai_controllers")
+	if player_id >= 0 and player_id < GameConfig.ai_strategies.size():
+		strategy = GameConfig.ai_strategies[player_id]
+	var targets := _get_targets()
+	if not targets.is_empty():
+		balanced_index = player_id % targets.size()
 
 
-func think() -> void:
+func choose_target_player(unit_type: String) -> int:
+	var targets := _get_targets()
+	if targets.is_empty():
+		return _get_opposite_player()
+
 	match strategy:
 		"AGGRESSIVE":
-			_strategy_aggressive()
+			return _choose_nearest_target(targets)
 		"ECONOMY":
-			_strategy_economy()
+			return _get_opposite_player()
 		"ADAPTIVE":
-			_strategy_adaptive()
+			return _choose_low_pressure_target(targets)
 		_:
-			_strategy_balanced()
+			return _choose_balanced_target(targets, unit_type)
 
 
-func _strategy_aggressive() -> void:
-	_buy_unit("Scout")
+func choose_route(unit_type: String, target_player_id: int) -> Array[Vector2]:
+	var game_map := _get_game_map()
+	if game_map != null and game_map.has_method("get_route"):
+		var route: Array[Vector2] = []
+		route.assign(game_map.call("get_route", player_id, target_player_id, "main"))
+		if not route.is_empty():
+			return route
+
+	if game_map != null and game_map.has_method("get_march_path"):
+		var fallback: Array[Vector2] = []
+		fallback.assign(game_map.call("get_march_path", player_id))
+		return fallback
+
+	return []
 
 
-func _strategy_balanced() -> void:
-	var order := ["Scout", "Soldier", "Mage", "Soldier"]
-	for offset in order.size():
-		var unit_type: String = order[(balanced_index + offset) % order.size()]
-		if _buy_unit(unit_type):
-			balanced_index = (balanced_index + offset + 1) % order.size()
-			return
+func _get_targets() -> Array[int]:
+	var game_map := _get_game_map()
+	if game_map != null and game_map.has_method("get_target_player_ids"):
+		var targets: Array[int] = []
+		targets.assign(game_map.call("get_target_player_ids", player_id))
+		return targets
+
+	var result: Array[int] = []
+	for index in GameConfig.player_count:
+		if index != player_id:
+			result.append(index)
+	return result
 
 
-func _strategy_economy() -> void:
-	if not _buy_unit("Tank"):
-		_buy_unit("Mage")
+func _choose_nearest_target(targets: Array[int]) -> int:
+	var game_map := _get_game_map()
+	if game_map == null or not game_map.has_method("get_base_position"):
+		return targets[0]
+
+	var my_position: Vector2 = game_map.call("get_base_position", player_id)
+	var best_target := targets[0]
+	var best_distance := INF
+	for target_id in targets:
+		var target_position: Vector2 = game_map.call("get_base_position", target_id)
+		var distance := my_position.distance_to(target_position)
+		if distance < best_distance:
+			best_distance = distance
+			best_target = target_id
+	return best_target
 
 
-func _strategy_adaptive() -> void:
-	var spawn_manager := _get_spawn_manager()
-	if spawn_manager == null:
-		return
+func _choose_balanced_target(targets: Array[int], unit_type: String) -> int:
+	if unit_type == "Tank":
+		return _get_opposite_player()
 
-	var my_units: int = spawn_manager.get_player_unit_count(player_id)
-	if my_units < 3:
-		_strategy_aggressive()
-	elif my_units < 8:
-		_strategy_balanced()
-	else:
-		_strategy_economy()
+	var target := targets[balanced_index % targets.size()]
+	balanced_index += 1
+	return target
 
 
-func _buy_unit(unit_type: String) -> bool:
-	var resource_manager := _get_resource_manager()
-	var spawn_manager := _get_spawn_manager()
-	if resource_manager == null or spawn_manager == null:
-		return false
-
-	var cost: float = UNIT_COSTS[unit_type]
-	if not resource_manager.spend_gold(player_id, cost):
-		return false
-
-	var unit: Node = spawn_manager.spawn_unit(player_id, unit_type)
-	if unit == null:
-		resource_manager.add_gold(player_id, cost)
-		return false
-
-	return true
+func _choose_low_pressure_target(targets: Array[int]) -> int:
+	var best_target := targets[0]
+	var best_count := INF
+	for target_id in targets:
+		var count := _count_units_for_player(target_id)
+		if count < best_count:
+			best_count = count
+			best_target = target_id
+	return best_target
 
 
-func _get_resource_manager() -> Node:
-	return get_node_or_null(resource_manager_path)
+func _count_units_for_player(target_player_id: int) -> int:
+	var count := 0
+	for node in get_tree().get_nodes_in_group("units"):
+		if int(node.get("player_id")) == target_player_id:
+			count += 1
+	return count
 
 
-func _get_spawn_manager() -> Node:
-	return get_node_or_null(spawn_manager_path)
+func _get_opposite_player() -> int:
+	match player_id:
+		0:
+			return 3
+		1:
+			return 2
+		2:
+			return 1
+		3:
+			return 0
+		_:
+			return (player_id + 1) % maxi(GameConfig.player_count, 1)
+
+
+func _get_game_map() -> Node:
+	if game_map_path != NodePath(""):
+		var node := get_node_or_null(game_map_path)
+		if node != null:
+			return node
+	return get_tree().get_first_node_in_group("game_maps")

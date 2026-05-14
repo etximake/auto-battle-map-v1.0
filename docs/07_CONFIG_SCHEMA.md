@@ -1,0 +1,172 @@
+# CONFIG SCHEMA - JSON Driven Game Parameters
+## Ball-Drop Auto Battle Castle Simulator
+
+---
+
+## 1. Muc Tieu
+
+Game can co JSON config de sau nay nguoi dung hoac nguoi lam content co the doi tham so ma khong can sua code.
+
+Nguyen tac:
+- Code co safe defaults trong `GameConfig.gd`.
+- Project co default preset JSON trong `res://configs/default_game_config.json`.
+- Nguoi dung co the override bang `user://game_config_override.json`.
+- Neu JSON loi hoac thieu field, game dung safe defaults va log warning.
+- Config chi dieu khien tham so gameplay/UI/simulation, khong tu dong load asset that trong phase prototype.
+
+---
+
+## 2. Load Order
+
+```text
+GameConfig.gd safe defaults
+  -> load res://configs/default_game_config.json
+  -> load user://game_config_override.json if exists
+  -> validate / clamp
+  -> game systems read from GameConfig
+```
+
+`user://game_config_override.json` co uu tien cao nhat.
+
+---
+
+## 3. File Du Kien
+
+```text
+res://configs/
+|-- default_game_config.json
+|-- presets/
+|   |-- fast_rounds.json
+|   |-- heavy_units.json
+|   +-- chaos_balls.json
+```
+
+User override:
+
+```text
+user://game_config_override.json
+```
+
+---
+
+## 4. Schema De Xuat
+
+```json
+{
+  "version": 1,
+  "game_mode": "base",
+  "players": {
+    "count": 4,
+    "colors": ["#E74C3C", "#3498DB", "#2ECC71", "#F1C40F"],
+    "ai_strategies": ["BALANCED", "BALANCED", "BALANCED", "BALANCED"]
+  },
+  "round": {
+    "duration": 75.0,
+    "rounds_per_session": 10,
+    "auto_restart": true,
+    "time_scale": 1.0
+  },
+  "ball_panel": {
+    "spawn_interval": 0.7,
+    "ball_speed": 165.0,
+    "max_live_balls": 8,
+    "anchor_count": 6,
+    "anchor_radius": 11.0,
+    "anchor_min_y": 56.0,
+    "anchor_reward_gap": 112.0
+  },
+  "rewards": {
+    "slot_order": ["Scout", "Soldier", "Tank", "Mage", "x2"],
+    "x2_mode": "next_reward"
+  },
+  "auto_battle": {
+    "castle_unit_damage_multiplier": 1.0,
+    "unit_kill_score": 5,
+    "castle_damage_score_per_point": 0.1,
+    "castle_destroy_score": 50
+  },
+  "units": {
+    "Scout": {"hp": 20, "damage": 5, "speed": 190, "range": 28, "cooldown": 0.8, "visual_radius": 12, "collision_radius": 7},
+    "Soldier": {"hp": 50, "damage": 15, "speed": 140, "range": 34, "cooldown": 1.0, "visual_radius": 15, "collision_radius": 9},
+    "Tank": {"hp": 150, "damage": 8, "speed": 85, "range": 32, "cooldown": 1.5, "visual_radius": 18, "collision_radius": 11},
+    "Mage": {"hp": 30, "damage": 40, "speed": 115, "range": 85, "cooldown": 2.0, "visual_radius": 14, "collision_radius": 8}
+  },
+  "unit_behavior": {
+    "body_collision_enabled": false,
+    "waypoint_distance": 7.0
+  },
+  "castle": {
+    "max_hp": 500,
+    "spawn_cooldown": 1.0,
+    "queue_limit": 40
+  },
+  "limits": {
+    "max_units_per_player": 30,
+    "max_total_units": 120
+  },
+  "optional_modes": {
+    "neutral_towers_enabled": false
+  }
+}
+```
+
+---
+
+## 5. Validation Rules
+
+GameConfig phai validate:
+- `players.count`: clamp `2..6`.
+- `round.duration`: min `10.0`.
+- `time_scale`: clamp `0.25..4.0`.
+- `ball_panel.spawn_interval`: min `0.1`.
+- `ball_panel.max_live_balls`: clamp `1..50`.
+- `ball_panel.anchor_count`: clamp `0..24`.
+- `ball_panel.anchor_reward_gap`: min `64.0`.
+- `castle.queue_limit`: clamp `1..200`.
+- `limits.max_units_per_player`: clamp `1..200`.
+- `unit_behavior.waypoint_distance`: clamp `2.0..24.0`.
+- `auto_battle.*`: score/damage values should stay `>= 0`.
+- Mau player invalid thi fallback `#AAAAAA`.
+- Reward type unknown thi ignore va log warning.
+- Unit stat missing thi fallback theo safe defaults.
+
+---
+
+## 6. Systems Dung Config
+
+```text
+BallPanel.gd
+  -> spawn_interval, ball_speed, max_live_balls, anchors, reward slot_order
+
+PlayerBase.gd / PlayerCastle
+  -> max_hp, spawn_cooldown, queue_limit
+
+SpawnManager.gd
+  -> max_units_per_player, max_total_units
+
+Unit.gd
+  -> unit stats, visual_radius, collision_radius, body_collision, waypoint_distance
+
+ScoreManager.gd
+  -> unit_kill_score, castle_damage_score_per_point, castle_destroy_score
+
+AIController.gd
+  -> ai_strategies
+
+RoundManager.gd
+  -> duration, auto_restart, time_scale
+```
+
+---
+
+## 7. Scope Rule
+
+Khong implement UI settings menu trong prototype gan nhat.
+
+Truoc mat chi can:
+- JSON file.
+- Loader trong `GameConfig.gd`.
+- Validation.
+- Test scene hoac console summary de biet config da load.
+
+UI settings menu de phase polish sau.

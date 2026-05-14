@@ -11,6 +11,8 @@ reward_slot_scene = ExtResource("3_slot")
 
 [node name="Background" type="Polygon2D" parent="."]
 
+[node name="AnchorPoints" type="Node2D" parent="."]
+
 [node name="TitleLabel" type="Label" parent="."]
 theme_override_font_sizes/font_size = 24
 

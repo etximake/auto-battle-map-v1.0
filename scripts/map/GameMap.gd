@@ -1,6 +1,5 @@
 extends Node2D
 class_name GameMap
-
 const CENTER_POSITION := Vector2(640, 360)
 const MAP_RECT := Rect2(192, 0, 896, 720)
 const BASE_POSITIONS := {
@@ -25,55 +24,44 @@ const PLAYER_COLORS := {
 	2: Color("#2ECC71"),
 	3: Color("#F1C40F"),
 }
-
 var path_waypoints: Dictionary = {}
-
 @onready var path_visual: Node2D = $PathVisual
 @onready var base_markers: Node2D = $BaseMarkers
 @onready var optional_tower_markers: Node2D = $OptionalTowerMarkers
-
-
 func _ready() -> void:
+	add_to_group("game_maps")
 	_setup_default_paths()
 	_load_paths_from_nodes()
 	_draw_path_lines()
 	_setup_map_markers()
-
-
 func get_march_path(player_id: int) -> Array[Vector2]:
+	return get_route(player_id, _get_main_opponent(player_id))
+func get_route(from_player_id: int, target_player_id: int, _route_id: String = "main") -> Array[Vector2]:
 	var full_path: Array[Vector2] = []
-	var my_path: Array = path_waypoints.get(player_id, [])
-	var opponent_path: Array = path_waypoints.get(_get_main_opponent(player_id), [])
-
+	var my_path: Array = path_waypoints.get(from_player_id, [])
+	var target_path: Array = path_waypoints.get(target_player_id, [])
 	for point in my_path:
 		full_path.append(point)
-
-	for index in range(opponent_path.size() - 2, -1, -1):
-		full_path.append(opponent_path[index])
-
+	for index in range(target_path.size() - 2, -1, -1):
+		full_path.append(target_path[index])
 	return full_path
-
-
+func get_target_player_ids(from_player_id: int) -> Array[int]:
+	var targets: Array[int] = []
+	for target_id in BASE_POSITIONS.keys():
+		if int(target_id) != from_player_id:
+			targets.append(int(target_id))
+	return targets
 func get_base_position(player_id: int) -> Vector2:
 	return BASE_POSITIONS.get(player_id, CENTER_POSITION)
-
-
 func get_center_position() -> Vector2:
 	return CENTER_POSITION
-
-
 func get_map_rect() -> Rect2:
 	return MAP_RECT
-
-
 func get_optional_tower_positions() -> Array[Vector2]:
 	var positions: Array[Vector2] = []
 	for position in OPTIONAL_TOWER_POSITIONS:
 		positions.append(position)
-
 	return positions
-
-
 func _setup_default_paths() -> void:
 	path_waypoints = {
 		0: [
@@ -117,64 +105,46 @@ func _setup_default_paths() -> void:
 			CENTER_POSITION,
 		],
 	}
-
-
 func _load_paths_from_nodes() -> void:
 	for player_id in BASE_POSITIONS.keys():
 		var path_node := get_node_or_null("Paths/Path_P%d" % player_id)
 		if path_node is Path2D and path_node.curve != null and path_node.curve.point_count > 0:
 			path_waypoints[player_id] = _path2d_to_waypoints(path_node)
-
-
 func _path2d_to_waypoints(path_node: Path2D) -> Array[Vector2]:
 	var points: Array[Vector2] = []
 	for index in path_node.curve.point_count:
 		points.append(path_node.global_position + path_node.curve.get_point_position(index))
-
 	return points
-
-
 func _draw_path_lines() -> void:
 	for player_id in path_waypoints.keys():
 		var line := path_visual.get_node_or_null("PathLine_P%d" % player_id) as Line2D
 		if line == null:
 			continue
-
 		var points := PackedVector2Array()
 		for point in path_waypoints[player_id]:
 			points.append(point)
 		line.points = points
-
-
 func _setup_map_markers() -> void:
 	for player_id in BASE_POSITIONS.keys():
 		var marker := base_markers.get_node_or_null("BaseMarker_%d" % player_id) as Polygon2D
 		if marker == null:
 			continue
-
 		marker.position = BASE_POSITIONS[player_id]
 		marker.polygon = _make_circle_polygon(24.0, 24)
 		marker.color = PLAYER_COLORS[player_id]
-
 	for index in OPTIONAL_TOWER_POSITIONS.size():
 		var marker := optional_tower_markers.get_node_or_null("OptionalTowerMarker_%d" % index) as Polygon2D
 		if marker == null:
 			continue
-
 		marker.position = OPTIONAL_TOWER_POSITIONS[index]
 		marker.polygon = _make_square_polygon(16.0)
 		marker.color = Color("#777777")
-
-
 func _make_circle_polygon(radius: float, point_count: int) -> PackedVector2Array:
 	var points := PackedVector2Array()
 	for index in point_count:
 		var angle := TAU * float(index) / float(point_count)
 		points.append(Vector2(cos(angle), sin(angle)) * radius)
-
 	return points
-
-
 func _make_square_polygon(size: float) -> PackedVector2Array:
 	var half_size := size * 0.5
 	return PackedVector2Array([
@@ -183,8 +153,6 @@ func _make_square_polygon(size: float) -> PackedVector2Array:
 		Vector2(half_size, half_size),
 		Vector2(-half_size, half_size),
 	])
-
-
 func _get_main_opponent(player_id: int) -> int:
 	match player_id:
 		0:

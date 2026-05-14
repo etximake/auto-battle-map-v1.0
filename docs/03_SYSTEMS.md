@@ -20,6 +20,15 @@ Moi player co mot panel mau o bien man hinh. Panel tu spawn ball, ball roi/chay 
 
 Prototype duoc phep dung scripted movement truoc, chua can physics phuc tap.
 
+Thong so BallPanel sau nay lay tu `GameConfig`:
+- `spawn_interval`
+- `ball_speed`
+- `max_live_balls`
+- `anchor_count`
+- `anchor_radius`
+- `anchor_reward_gap`
+- `reward slot_order`
+
 ### Flow
 
 ```text
@@ -311,3 +320,45 @@ ScoreManager chi lang nghe event, khong dieu khien spawn/combat.
 - Capture Outpost Mode.
 
 Khong dat active trong `Main.tscn` base mode.
+
+---
+
+## 12. CONFIG SYSTEM
+
+### Files
+
+- `scripts/autoloads/GameConfig.gd`
+- `configs/default_game_config.json`
+- `configs/presets/*.json`
+- `user://game_config_override.json`
+
+### Trach nhiem
+
+`GameConfig` la noi duy nhat load va validate JSON config.
+
+Load order:
+
+```text
+safe defaults
+  -> default_game_config.json
+  -> user override
+  -> validate/clamp
+```
+
+Systems khac chi doc config qua `GameConfig`, khong tu parse JSON.
+
+Config groups:
+- `players`
+- `round`
+- `ball_panel`
+- `rewards`
+- `units`
+- `castle`
+- `limits`
+- `optional_modes`
+
+Mini test sau khi implement:
+- Chay Godot headless.
+- Log config summary.
+- Doi `ball_panel.spawn_interval` trong JSON va thay doi co tac dung voi `BallPanel`.
+- JSON sai field khong crash game.

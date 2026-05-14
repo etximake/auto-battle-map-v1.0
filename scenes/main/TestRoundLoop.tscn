@@ -1,69 +1,67 @@
-[gd_scene load_steps=10 format=3 uid="uid://main_scene_autobattletd"]
+[gd_scene load_steps=12 format=3 uid="uid://test_round_loop_scene"]
 
 [ext_resource type="PackedScene" path="res://scenes/map/GameMap.tscn" id="1_map"]
-[ext_resource type="Script" path="res://scripts/systems/ResourceManager.gd" id="2_resource"]
-[ext_resource type="Script" path="res://scripts/systems/SpawnManager.gd" id="3_spawn"]
-[ext_resource type="Script" path="res://scripts/players/AIController.gd" id="4_ai"]
-[ext_resource type="Script" path="res://scripts/systems/RewardManager.gd" id="5_reward"]
-[ext_resource type="PackedScene" path="res://scenes/ui/BallPanel.tscn" id="6_panel"]
-[ext_resource type="Script" path="res://scripts/systems/ScoreManager.gd" id="7_score"]
-[ext_resource type="Script" path="res://scripts/systems/RoundManager.gd" id="8_round"]
+[ext_resource type="Script" path="res://scripts/systems/SpawnManager.gd" id="2_spawn"]
+[ext_resource type="Script" path="res://scripts/systems/RewardManager.gd" id="3_reward"]
+[ext_resource type="Script" path="res://scripts/systems/ScoreManager.gd" id="4_score"]
+[ext_resource type="Script" path="res://scripts/systems/RoundManager.gd" id="5_round"]
+[ext_resource type="Script" path="res://scripts/systems/RoundLoopTestMonitor.gd" id="6_monitor"]
+[ext_resource type="Script" path="res://scripts/players/AIController.gd" id="7_ai"]
+[ext_resource type="PackedScene" path="res://scenes/ui/BallPanel.tscn" id="8_panel"]
 [ext_resource type="Script" path="res://scripts/ui/RoundHud.gd" id="9_hud"]
 
-[node name="Main" type="Node2D"]
+[node name="TestRoundLoop" type="Node2D"]
 
 [node name="GameMap" parent="." instance=ExtResource("1_map")]
 
 [node name="Systems" type="Node" parent="."]
 
-[node name="ResourceManager" type="Node" parent="Systems"]
-script = ExtResource("2_resource")
-
 [node name="SpawnManager" type="Node" parent="Systems"]
-script = ExtResource("3_spawn")
+script = ExtResource("2_spawn")
 game_map_path = NodePath("../../GameMap")
 units_container_path = NodePath("../../GameMap/SpawnedUnits")
 
 [node name="RewardManager" type="Node" parent="Systems"]
-script = ExtResource("5_reward")
+script = ExtResource("3_reward")
 
 [node name="ScoreManager" type="Node" parent="Systems"]
-script = ExtResource("7_score")
+script = ExtResource("4_score")
 
 [node name="RoundManager" type="Node" parent="Systems"]
-script = ExtResource("8_round")
+script = ExtResource("5_round")
+round_duration_override = 8.0
+restart_delay = 1.0
+
+[node name="RoundLoopTestMonitor" type="Node" parent="Systems"]
+script = ExtResource("6_monitor")
 
 [node name="Players" type="Node" parent="."]
 
 [node name="AI_0" type="Node" parent="Players"]
-script = ExtResource("4_ai")
+script = ExtResource("7_ai")
 player_id = 0
 strategy = "BALANCED"
-active = false
 game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
 
 [node name="AI_1" type="Node" parent="Players"]
-script = ExtResource("4_ai")
+script = ExtResource("7_ai")
 player_id = 1
 strategy = "BALANCED"
-active = false
 game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
 
 [node name="AI_2" type="Node" parent="Players"]
-script = ExtResource("4_ai")
+script = ExtResource("7_ai")
 player_id = 2
 strategy = "BALANCED"
-active = false
 game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
 
 [node name="AI_3" type="Node" parent="Players"]
-script = ExtResource("4_ai")
+script = ExtResource("7_ai")
 player_id = 3
 strategy = "BALANCED"
-active = false
 game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
 
@@ -96,17 +94,17 @@ offset_top = 74.0
 offset_right = 496.0
 offset_bottom = 104.0
 
-[node name="Panel_P0" parent="UI" instance=ExtResource("6_panel")]
+[node name="Panel_P0" parent="UI" instance=ExtResource("8_panel")]
 player_id = 0
 
-[node name="Panel_P1" parent="UI" instance=ExtResource("6_panel")]
+[node name="Panel_P1" parent="UI" instance=ExtResource("8_panel")]
 position = Vector2(1088, 0)
 player_id = 1
 
-[node name="Panel_P2" parent="UI" instance=ExtResource("6_panel")]
+[node name="Panel_P2" parent="UI" instance=ExtResource("8_panel")]
 position = Vector2(0, 360)
 player_id = 2
 
-[node name="Panel_P3" parent="UI" instance=ExtResource("6_panel")]
+[node name="Panel_P3" parent="UI" instance=ExtResource("8_panel")]
 position = Vector2(1088, 360)
 player_id = 3

@@ -11,6 +11,8 @@ signal castle_spawn_requested(player_id: int, unit_type: String)
 signal unit_reached_castle(unit: Node, target_castle: Node)
 signal castle_damaged(castle: Node, amount: float, attacker_player: int)
 signal castle_destroyed(castle: Node)
+signal score_awarded(player_id: int, amount: int, reason: String)
+signal score_changed(player_id: int, new_score: int)
 
 # Existing unit events kept for current movement/combat code.
 signal unit_spawned(unit: Node, player_id: int)

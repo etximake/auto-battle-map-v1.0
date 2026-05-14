@@ -157,5 +157,19 @@ Base mode can `units`, `castles`, `panel_balls`, `reward_slots`.
 - Khong dung asset that trong prototype.
 - Khong coi neutral tower la core gameplay.
 - Khong mo rong gold-buy AI thanh base loop.
+- Gameplay parameters phai tien toi JSON config qua `GameConfig`.
 - Moi phase can co mini test de xem duoc ngay trong Godot.
 - Moi file GDScript nen duoi 200 dong.
+
+---
+
+## CONFIG QUICK REF
+
+```text
+GameConfig safe defaults
+  -> res://configs/default_game_config.json
+  -> user://game_config_override.json
+  -> validate/clamp
+```
+
+Doc chi tiet: `docs/07_CONFIG_SCHEMA.md`.

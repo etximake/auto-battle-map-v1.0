@@ -31,27 +31,27 @@ check_delay = 2.0
 [node name="AI_0" type="Node" parent="Players"]
 script = ExtResource("4_ai")
 player_id = 0
-strategy = "AGGRESSIVE"
-resource_manager_path = NodePath("../../Systems/ResourceManager")
+strategy = "BALANCED"
+game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
 
 [node name="AI_1" type="Node" parent="Players"]
 script = ExtResource("4_ai")
 player_id = 1
 strategy = "BALANCED"
-resource_manager_path = NodePath("../../Systems/ResourceManager")
+game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
 
 [node name="AI_2" type="Node" parent="Players"]
 script = ExtResource("4_ai")
 player_id = 2
-strategy = "ECONOMY"
-resource_manager_path = NodePath("../../Systems/ResourceManager")
+strategy = "BALANCED"
+game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
 
 [node name="AI_3" type="Node" parent="Players"]
 script = ExtResource("4_ai")
 player_id = 3
-strategy = "ADAPTIVE"
-resource_manager_path = NodePath("../../Systems/ResourceManager")
+strategy = "BALANCED"
+game_map_path = NodePath("../../GameMap")
 spawn_manager_path = NodePath("../../Systems/SpawnManager")
