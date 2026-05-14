@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://test_units_scene"]
+
+[ext_resource type="Script" path="res://scripts/systems/UnitTestSpawner.gd" id="1_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/units/Unit.tscn" id="2_unit"]
+
+[node name="TestUnits" type="Node2D"]
+
+[node name="UnitTestSpawner" type="Node2D" parent="."]
+script = ExtResource("1_spawner")
+unit_scene = ExtResource("2_unit")
