@@ -47,6 +47,8 @@ func setup_unit(new_player_id: int, new_unit_type: String, new_path_points: Arra
 		path_index = 1
 
 	if is_node_ready():
+		_setup_jelly_visual()
+		_setup_collision()
 		_apply_player_color()
 		_update_label()
 
@@ -88,18 +90,19 @@ func _follow_path(_delta: float) -> void:
 
 
 func _setup_jelly_visual() -> void:
-	body.polygon = _make_circle_polygon(24.0, 24)
+	var body_radius := _get_visual_radius()
+	body.polygon = _make_circle_polygon(body_radius, 24)
 
-	left_eye.polygon = _make_circle_polygon(4.0, 12)
-	left_eye.position = Vector2(8.0, -7.0)
+	left_eye.polygon = _make_circle_polygon(maxf(body_radius * 0.16, 3.0), 12)
+	left_eye.position = Vector2(body_radius * 0.32, -body_radius * 0.28)
 	left_eye.color = Color.WHITE
 
-	right_eye.polygon = _make_circle_polygon(4.0, 12)
-	right_eye.position = Vector2(8.0, 7.0)
+	right_eye.polygon = _make_circle_polygon(maxf(body_radius * 0.16, 3.0), 12)
+	right_eye.position = Vector2(body_radius * 0.32, body_radius * 0.28)
 	right_eye.color = Color.WHITE
 
-	name_label.position = Vector2(-32.0, 28.0)
-	name_label.size = Vector2(64.0, 18.0)
+	name_label.position = Vector2(-38.0, body_radius + 4.0)
+	name_label.size = Vector2(76.0, 18.0)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.add_theme_font_size_override("font_size", 10)
@@ -107,7 +110,7 @@ func _setup_jelly_visual() -> void:
 
 func _setup_collision() -> void:
 	var circle_shape := CircleShape2D.new()
-	circle_shape.radius = 24.0
+	circle_shape.radius = _get_visual_radius()
 	collision_shape.shape = circle_shape
 
 
@@ -139,3 +142,17 @@ func _make_circle_polygon(radius: float, point_count: int) -> PackedVector2Array
 		points.append(Vector2(cos(angle), sin(angle)) * radius * wobble)
 
 	return points
+
+
+func _get_visual_radius() -> float:
+	match unit_type:
+		"Scout":
+			return 18.0
+		"Soldier":
+			return 24.0
+		"Tank":
+			return 30.0
+		"Mage":
+			return 22.0
+		_:
+			return 24.0

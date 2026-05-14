@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://test_map_path_scene"]
+
+[ext_resource type="PackedScene" path="res://scenes/map/GameMap.tscn" id="1_map"]
+[ext_resource type="Script" path="res://scripts/systems/UnitTestSpawner.gd" id="2_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/units/Unit.tscn" id="3_unit"]
+
+[node name="TestMapPath" type="Node2D"]
+
+[node name="GameMap" parent="." instance=ExtResource("1_map")]
+
+[node name="UnitTestSpawner" type="Node2D" parent="."]
+script = ExtResource("2_spawner")
+unit_scene = ExtResource("3_unit")
+use_game_map_paths = true
+game_map_path = NodePath("../GameMap")
+units_parent_path = NodePath("../GameMap/SpawnedUnits")
+test_unit_type = "Blob"

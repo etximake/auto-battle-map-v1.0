@@ -340,6 +340,12 @@ func _clear_all_units() -> void:
 
 ### File: `scripts/units/Unit.gd`
 
+Current prototype status:
+- Phase 2 uses Jelly Blob placeholder visuals.
+- `Unit.tscn` visual nodes are `Body`, `LeftEye`, `RightEye`, `CollisionShape2D`, `Label`.
+- Scout/Soldier/Tank/Mage scenes inherit `Unit.tscn` and override `unit_type`, `move_speed`, `max_hp`.
+- Combat, HP bar, `DetectionArea`, object pool reset and EventBus integration are Phase 5 upgrades, not part of the current placeholder unit.
+
 ```gdscript
 extends CharacterBody2D
 class_name Unit
@@ -367,9 +373,11 @@ var attack_timer: float = 0.0
 var current_target: Unit = null
 
 # Visual
-@onready var sprite: ColorRect = $Sprite
-@onready var hp_bar: ProgressBar = $HPBar
-@onready var detection_area: Area2D = $DetectionArea
+@onready var body: Polygon2D = $Body
+@onready var left_eye: Polygon2D = $LeftEye
+@onready var right_eye: Polygon2D = $RightEye
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
+@onready var name_label: Label = $Label
 
 func initialize(p_id: int, spawn_pos: Vector2, path: Array[Vector2]) -> void:
     player_id = p_id

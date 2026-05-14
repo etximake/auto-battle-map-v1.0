@@ -22,6 +22,7 @@ Bạn là Godot 4.5 GDScript expert. Tôi đang build một Auto Battle Tower De
 - Godot 4.5, GDScript
 - 2D top-down
 - Không dùng Tilemap phức tạp (dùng ColorRect/Line2D cho map)
+- Unit placeholder dùng style Jelly Blob bằng primitive nodes (`Polygon2D`, `CollisionShape2D`, `Label`), không dùng sprite/image asset ở phase prototype
 - Không cần âm thanh, animation phức tạp
 - Không cần player input
 

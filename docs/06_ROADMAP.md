@@ -14,8 +14,14 @@ Cập nhật theo project hiện tại:
 - Đã có scene test `scenes/main/TestUnits.tscn`.
 - Đã có `scripts/systems/UnitTestSpawner.gd` để spawn 4 unit test.
 - Đã verify `TestUnits.tscn` bằng Godot 4.5 headless: scene load không lỗi console.
-- `GameConfig.gd`, `GameState.gd`, `EventBus.gd` đang là file rỗng, chưa phải autoload hoạt động.
-- Chưa có `Main.tscn`, `GameMap.tscn`, `RoundManager`, `SpawnManager`, `ResourceManager`, `AIController`, `PlayerBase`, `NeutralTower`, UI.
+- `UnitTestSpawner.gd` đã dùng test path 1280x720 theo chuẩn chính thức.
+- Đã có scene biến thể Jelly Blob: `Scout.tscn`, `Soldier.tscn`, `Tank.tscn`, `Mage.tscn`.
+- `GameConfig.gd`, `GameState.gd`, `EventBus.gd` đã có nội dung nền tảng và đã đăng ký autoload.
+- Đã có `scenes/main/Main.tscn` làm main scene tối thiểu.
+- `project.godot` đã set main scene và resolution 1280x720.
+- Đã có `scenes/map/GameMap.tscn` và `scripts/map/GameMap.gd`.
+- Đã có `scenes/main/TestMapPath.tscn` để test Jelly Blob đi theo path thật từ `GameMap`.
+- Chưa có `RoundManager`, `SpawnManager`, `ResourceManager`, `AIController`, `PlayerBase`, `NeutralTower`, UI.
 
 ### Lệch Thiết Kế Cần Điều Chỉnh
 
@@ -23,11 +29,11 @@ Cập nhật theo project hiện tại:
    - Điều chỉnh: Phase 2 mới là `Assets & Style - Jelly Blob Placeholder`.
    - `AI & Economy` dời sang Phase 4, sau khi map/path và spawn flow ổn định.
 
-2. Prototype `TestUnits.tscn` đang dùng tọa độ 1920x1080:
+2. Prototype `TestUnits.tscn` ban đầu dùng tọa độ 1920x1080:
    - Center: `Vector2(960, 540)`
    - Góc: `Vector2(192,108)`, `Vector2(1728,108)`, `Vector2(192,972)`, `Vector2(1728,972)`
    - Thiết kế GDD ban đầu dùng 1280x720 với center `Vector2(640, 360)`.
-   - Điều chỉnh: chuẩn chính thức của project là 1280x720 theo GDD. Giữ `TestUnits.tscn` như scene test visual độc lập cho prototype, không dùng nó làm chuẩn tọa độ gameplay.
+   - Điều chỉnh đã làm: chuẩn chính thức của project là 1280x720 theo GDD, và test path hiện tại đã đổi về tọa độ 1280x720. Giữ `TestUnits.tscn` như scene test visual độc lập cho prototype, không dùng nó làm main gameplay scene.
 
 3. `Unit.gd` hiện tại là placeholder movement/visual, chưa phải Unit gameplay cuối cùng.
    - Chưa có UnitState `MARCHING/ATTACKING/DEAD`.
@@ -52,10 +58,10 @@ Cập nhật theo project hiện tại:
 
 | Phase | Tên | Mục tiêu | Trạng thái |
 |---|---|---|---|
-| 0 | Project Setup | Project, folder, autoload shell | Đang làm |
-| 1 | Core Foundation | Autoloads, GameState, EventBus, config chuẩn | Chưa làm |
-| 2 | Assets & Style | Jelly Blob placeholder, unit primitive visual | Đã bắt đầu |
-| 3 | Map & Path | GameMap 1280x720, path visual, waypoint provider | Chưa làm |
+| 0 | Project Setup | Project, folder, autoload shell | Hoàn thành |
+| 1 | Core Foundation | Autoloads, GameState, EventBus, config chuẩn | Hoàn thành nền tảng |
+| 2 | Assets & Style | Jelly Blob placeholder, unit primitive visual | Hoàn thành |
+| 3 | Map & Path | GameMap 1280x720, path visual, waypoint provider | Hoàn thành |
 | 4 | Spawn, Economy & AI | ResourceManager, SpawnManager, AIController | Chưa làm |
 | 5 | Combat, Bases & Towers | Unit combat, PlayerBase, NeutralTower | Chưa làm |
 | 6 | Round, Score & UI | Round loop, score, HUD, player panels | Chưa làm |
@@ -89,10 +95,11 @@ Project có cấu trúc đúng, chạy được trong Godot, các file nền t�
 - [x] Tạo cây thư mục: `scenes/`, `scripts/`, `resources/`, `docs/`.
 - [x] Tạo các thư mục con theo thiết kế.
 - [x] Có file shell cho `GameConfig.gd`, `GameState.gd`, `EventBus.gd`.
-- [ ] Implement nội dung cho 3 autoload.
-- [ ] Đăng ký autoload trong `project.godot`.
-- [ ] Set main scene chính thức: `res://scenes/main/Main.tscn`.
-- [ ] Set resolution chuẩn 1280x720 trong `project.godot`.
+- [x] Implement nội dung cho 3 autoload.
+- [x] Đăng ký autoload trong `project.godot`.
+- [x] Set main scene chính thức: `res://scenes/main/Main.tscn`.
+- [x] Set resolution chuẩn 1280x720 trong `project.godot`.
+- [x] Verify: Godot 4.5 headless chạy main scene không lỗi.
 
 ### Deliverable
 Project chạy được với autoload thật, không lỗi khi mở scene chính.
@@ -105,23 +112,23 @@ Project chạy được với autoload thật, không lỗi khi mở scene chín
 Tạo nền tảng code dùng chung trước khi build gameplay loop.
 
 ### Step 1.1 - GameConfig
-- [ ] Implement `scripts/autoloads/GameConfig.gd`.
-- [ ] Config player count, colors, round duration, gold, strategies, time scale.
-- [ ] Dùng màu player đồng bộ với Jelly Blob:
+- [x] Implement `scripts/autoloads/GameConfig.gd`.
+- [x] Config player count, colors, round duration, gold, strategies, time scale.
+- [x] Dùng màu player đồng bộ với Jelly Blob:
   - Player 0: `#E74C3C`
   - Player 1: `#3498DB`
   - Player 2: `#2ECC71`
   - Player 3: `#F1C40F`
-- [ ] Giữ config mở rộng được lên 6 players.
+- [x] Giữ config mở rộng được lên 6 players.
 
 ### Step 1.2 - GameState
-- [ ] Implement `scripts/autoloads/GameState.gd`.
-- [ ] State enum: `IDLE`, `ROUND_ACTIVE`, `ROUND_END`, `SESSION_END`.
-- [ ] Signals: `state_changed`, `round_started`, `round_ended`.
+- [x] Implement `scripts/autoloads/GameState.gd`.
+- [x] State enum: `IDLE`, `ROUND_ACTIVE`, `ROUND_END`, `SESSION_END`.
+- [x] Signals: `state_changed`, `round_started`, `round_ended`.
 
 ### Step 1.3 - EventBus
-- [ ] Implement `scripts/autoloads/EventBus.gd`.
-- [ ] Khai báo signals trung tâm:
+- [x] Implement `scripts/autoloads/EventBus.gd`.
+- [x] Khai báo signals trung tâm:
   - `unit_spawned`
   - `unit_died`
   - `unit_reached_base`
@@ -132,8 +139,8 @@ Tạo nền tảng code dùng chung trước khi build gameplay loop.
   - `tower_attacked`
 
 ### Step 1.4 - Verify Foundation
-- [ ] Register 3 autoloads trong `project.godot`.
-- [ ] Chạy Godot headless, không lỗi parse/autoload.
+- [x] Register 3 autoloads trong `project.godot`.
+- [x] Chạy Godot headless, không lỗi parse/autoload.
 
 ### Deliverable
 Autoload foundation hoàn chỉnh, các hệ thống sau có thể gọi `GameConfig`, `GameState`, `EventBus`.
@@ -167,14 +174,16 @@ Chốt style placeholder bằng Godot primitive node để test gameplay nhanh, 
 - [x] Tạo `scripts/systems/UnitTestSpawner.gd`.
 - [x] Tạo `scenes/main/TestUnits.tscn`.
 - [x] Test scene spawn 4 blob và chạy về center.
+- [x] Đổi test path về tọa độ 1280x720 theo chuẩn chính thức.
+- [x] Tạo biến thể primitive Jelly Blob cho Scout/Soldier/Tank/Mage.
+- [x] Cập nhật docs để Jelly Blob là placeholder style chính thức.
+- [x] Verify bằng Godot 4.5 headless, không lỗi console.
 - [x] Không dùng `Input.*`.
 - [x] Không dùng sprite/image asset.
 
-### Cần làm tiếp trong Phase 2
-- [ ] Chạy visual test trong Godot editor để kiểm tra framing thực tế.
-- [ ] Đổi hoặc tạo thêm test path 1280x720 để khớp chuẩn chính thức.
-- [ ] Cập nhật docs để Jelly Blob là style placeholder chính thức.
-- [ ] Chuẩn bị biến thể visual cho Scout/Soldier/Tank/Mage bằng primitive nodes, chưa cần combat.
+### Ghi chú sau Phase 2
+- Visual editor check vẫn nên làm thủ công khi mở Godot, nhưng không còn lỗi load/parse ở headless.
+- Các scene biến thể hiện chỉ override `unit_type`, `move_speed`, `max_hp` và visual radius. Combat stats sẽ thêm ở Phase 5.
 
 ### Deliverable
 Một style placeholder rõ ràng, chạy được ngay, đủ dùng để test movement/spawn trước khi có asset thật.
@@ -187,28 +196,29 @@ Một style placeholder rõ ràng, chạy được ngay, đủ dùng để test 
 Tạo map thật theo GDD, chuẩn 1280x720, có path visual và API path cho unit.
 
 ### Step 3.1 - GameMap Scene
-- [ ] Tạo `scenes/map/GameMap.tscn`.
-- [ ] Root `Node2D` tên `GameMap`.
-- [ ] Background bằng `ColorRect`, không dùng TileMap phức tạp.
-- [ ] Tạo `Paths`, `PathVisual`, `SpawnedUnits`.
-- [ ] Vẽ 4 nhánh path bằng `Line2D`.
+- [x] Tạo `scenes/map/GameMap.tscn`.
+- [x] Root `Node2D` tên `GameMap`.
+- [x] Background bằng `ColorRect`, không dùng TileMap phức tạp.
+- [x] Tạo `Paths`, `PathVisual`, `SpawnedUnits`.
+- [x] Vẽ 4 nhánh path bằng `Line2D`.
 
 ### Step 3.2 - GameMap Script
-- [ ] Tạo `scripts/map/GameMap.gd`.
-- [ ] Hardcode base positions theo GDD:
+- [x] Tạo `scripts/map/GameMap.gd`.
+- [x] Hardcode base positions theo GDD:
   - Player 0: `Vector2(280, 80)`
   - Player 1: `Vector2(1000, 80)`
   - Player 2: `Vector2(280, 640)`
   - Player 3: `Vector2(1000, 640)`
   - Center: `Vector2(640, 360)`
-- [ ] Implement `get_march_path(player_id) -> Array[Vector2]`.
-- [ ] Opponent mapping: `0 <-> 3`, `1 <-> 2`.
-- [ ] Có `_load_paths_from_nodes()` để đọc `Path2D` nếu scene có path nodes.
+- [x] Implement `get_march_path(player_id) -> Array[Vector2]`.
+- [x] Opponent mapping: `0 <-> 3`, `1 <-> 2`.
+- [x] Có `_load_paths_from_nodes()` để đọc `Path2D` nếu scene có path nodes.
 
 ### Step 3.3 - Integrate Unit Placeholder
-- [ ] Tạo test scene map hoặc `Main.tscn` tối thiểu.
-- [ ] Spawn Jelly Blob từ base theo path thật.
-- [ ] Bỏ dần hardcoded 1920x1080 path khỏi test spawner, hoặc giữ riêng như test phụ.
+- [x] Tạo `TestMapPath.tscn` và cập nhật `Main.tscn` tối thiểu.
+- [x] Spawn Jelly Blob từ base theo path thật.
+- [x] Dùng lại tọa độ 1280x720 đã có trong test spawner để so sánh với path thật.
+- [x] Verify bằng Godot 4.5 headless, không lỗi console.
 
 ### Deliverable
 Unit có thể march trên map thật, path nhìn rõ, coordinate thống nhất.
@@ -356,13 +366,10 @@ Project chạy tự động, nhìn rõ trên video, đủ ổn định để qua
 
 ## Backlog Ưu Tiên Gần Nhất
 
-1. Implement 3 autoload thật: `GameConfig`, `GameState`, `EventBus`.
-2. Đăng ký autoloads trong `project.godot`.
-3. Set project resolution chính thức 1280x720.
-4. Tạo `GameMap.tscn` và `GameMap.gd`.
-5. Tích hợp Jelly Blob unit vào map/path thật.
-6. Đồng bộ docs đang mô tả unit kiểu `ColorRect` sang Jelly Blob.
-7. Sau đó mới làm `ResourceManager`, `SpawnManager`, `AIController`.
+1. Đồng bộ docs còn lại nếu có chỗ mô tả map/path cũ không khớp scene thực tế.
+2. Triển khai `ResourceManager.gd`.
+3. Triển khai `SpawnManager.gd`.
+4. Triển khai `AIController.gd`.
 
 ---
 

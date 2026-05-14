@@ -152,6 +152,12 @@ var rounds_per_session: int = 10   # số round trước khi restart
 | 3 | Tank | 20 | 150 | 8 | Slow | Absorb damage |
 | 4 | Mage | 15 | 30 | 40 | Normal | Burst damage |
 
+### Placeholder Visual Style:
+- Style chính trong giai đoạn prototype: **Jelly Blob**.
+- Unit được vẽ bằng Godot primitive nodes: `Polygon2D`, `CollisionShape2D`, `Label`.
+- Không dùng sprite/image asset ở giai đoạn placeholder.
+- Màu unit lấy theo `player_id`; biến thể Scout/Soldier/Tank/Mage khác nhau bằng kích thước, tốc độ và label.
+
 ### Unit Behavior (Auto):
 1. Spawn tại base
 2. Follow path waypoints

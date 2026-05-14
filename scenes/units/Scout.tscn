@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://unit_scout_jelly_blob"]
+
+[ext_resource type="PackedScene" path="res://scenes/units/Unit.tscn" id="1_unit"]
+
+[node name="Scout" instance=ExtResource("1_unit")]
+unit_type = "Scout"
+move_speed = 190.0
+max_hp = 20.0

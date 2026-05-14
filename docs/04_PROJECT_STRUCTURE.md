@@ -166,57 +166,47 @@ GameMap (Node2D) [script: GameMap.gd]
 ### Unit.tscn (base, không dùng trực tiếp)
 ```
 Unit (CharacterBody2D) [script: Unit.gd]
-├── Sprite (ColorRect) [size: 16×16, color: white]
-├── CollisionShape2D (CapsuleShape h=16, r=6)
-├── HPBar (ProgressBar) [size: 20×4, position: above unit]
-├── DetectionArea (Area2D)
-│   └── CollisionShape2D (CircleShape r=30) ← attack range
-└── RangeIndicator (Node2D) [visible=false, debug only]
+├── Body (Polygon2D)              ← Jelly Blob primitive
+├── LeftEye (Polygon2D)           ← mắt trắng nhỏ
+├── RightEye (Polygon2D)          ← mắt trắng nhỏ
+├── CollisionShape2D              ← CircleShape2D, radius theo unit_type
+└── Label                         ← hiển thị unit_type
 ```
 
 ### Scout.tscn (inherits Unit.tscn)
 ```
 Scout (Unit) [extends Unit.tscn]
-[script override các stats:]
   max_hp = 20
-  damage = 5
-  move_speed = 120    ← nhanh nhất
-  attack_range = 25
-  attack_cooldown = 0.8
+  move_speed = 190    ← nhanh nhất
   unit_type = "Scout"
+  visual radius = 18
 ```
 
 ### Soldier.tscn
 ```
 Soldier (Unit)
   max_hp = 50
-  damage = 15
-  move_speed = 80
-  attack_range = 30
-  attack_cooldown = 1.0
+  move_speed = 140
   unit_type = "Soldier"
+  visual radius = 24
 ```
 
 ### Tank.tscn
 ```
 Tank (Unit)
   max_hp = 150
-  damage = 8
-  move_speed = 50     ← chậm nhất
-  attack_range = 25
-  attack_cooldown = 1.5
+  move_speed = 85     ← chậm nhất
   unit_type = "Tank"
+  visual radius = 30
 ```
 
 ### Mage.tscn
 ```
 Mage (Unit)
   max_hp = 30
-  damage = 40         ← damage cao nhất
-  move_speed = 70
-  attack_range = 80   ← range xa nhất
-  attack_cooldown = 2.0
+  move_speed = 115
   unit_type = "Mage"
+  visual radius = 22
 ```
 
 ### NeutralTower.tscn
