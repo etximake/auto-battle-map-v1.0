@@ -33,6 +33,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if is_destroyed:
+		return
 	spawn_timer = maxf(spawn_timer - delta, 0.0)
 	if spawn_timer > 0.0 or reward_queue.is_empty():
 		return
@@ -41,6 +43,8 @@ func _process(delta: float) -> void:
 
 
 func queue_reward(reward_type: String) -> bool:
+	if is_destroyed:
+		return false
 	if reward_queue.size() >= queue_limit:
 		return false
 	if not _is_unit_reward(reward_type):
@@ -151,7 +155,7 @@ func _get_ai_controller() -> Node:
 
 
 func _is_unit_reward(reward_type: String) -> bool:
-	return ["Scout", "Soldier", "Tank", "Mage"].has(reward_type)
+	return GameConfig.is_unit_type(reward_type)
 
 
 func _make_circle_polygon(radius: float, point_count: int) -> PackedVector2Array:

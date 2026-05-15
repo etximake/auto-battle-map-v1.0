@@ -20,4 +20,4 @@ func _on_unit_spawned(unit: Node, player_id: int) -> void:
 	var route_end := Vector2.ZERO
 	if not path_points.is_empty():
 		route_end = path_points[path_points.size() - 1]
-	print("unit_spawned P%d route_end=%s" % [player_id, route_end])
+	print("unit_spawned P%d %s route_end=%s" % [player_id, String(unit.get("unit_type")), route_end])

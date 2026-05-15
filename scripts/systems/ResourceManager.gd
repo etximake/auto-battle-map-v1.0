@@ -15,13 +15,13 @@ func _process(delta: float) -> void:
 	if not _should_tick():
 		return
 
-	for player_id in range(GameConfig.player_count):
+	for player_id in range(GameConfig.get_player_count()):
 		add_gold(player_id, GameConfig.gold_per_second * delta)
 
 
 func reset_all() -> void:
 	gold.clear()
-	for player_id in range(GameConfig.player_count):
+	for player_id in range(GameConfig.get_player_count()):
 		gold[player_id] = float(GameConfig.starting_gold)
 		EventBus.gold_changed.emit(player_id, gold[player_id])
 

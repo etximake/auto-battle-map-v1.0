@@ -1,6 +1,7 @@
 extends Node
 
-const UNIT_SCENES := {
+const GENERIC_UNIT_SCENE := preload("res://scenes/units/Unit.tscn")
+const SPECIAL_UNIT_SCENES := {
 	"Scout": preload("res://scenes/units/Scout.tscn"),
 	"Soldier": preload("res://scenes/units/Soldier.tscn"),
 	"Tank": preload("res://scenes/units/Tank.tscn"),
@@ -10,6 +11,7 @@ const UNIT_SCENES := {
 @export var game_map_path: NodePath
 @export var units_container_path: NodePath
 @export var max_units_per_player: int = 30
+@export var max_total_units: int = 120
 @export var prewarm_per_type: int = 4
 
 var unit_pool: Dictionary = {}
@@ -19,6 +21,7 @@ var active_units: Array[Node] = []
 func _ready() -> void:
 	add_to_group("spawn_managers")
 	max_units_per_player = GameConfig.max_units_per_player
+	max_total_units = GameConfig.max_total_units
 	EventBus.round_reset_requested.connect(clear_all_units)
 	EventBus.unit_died.connect(_on_unit_removed)
 	EventBus.unit_reached_castle.connect(_on_unit_reached_castle)
@@ -28,8 +31,10 @@ func _ready() -> void:
 func spawn_unit(player_id: int, unit_type: String, route_points: Array[Vector2] = []) -> Node:
 	if _count_player_units(player_id) >= max_units_per_player:
 		return null
+	if active_units.size() >= max_total_units:
+		return null
 
-	if not UNIT_SCENES.has(unit_type):
+	if not GameConfig.is_unit_type(unit_type):
 		push_error("Unknown unit type: %s" % unit_type)
 		return null
 
@@ -58,8 +63,9 @@ func return_to_pool(unit: Node) -> void:
 	unit.hide()
 	unit.process_mode = Node.PROCESS_MODE_DISABLED
 	var unit_type := String(unit.get("unit_type"))
-	if unit_pool.has(unit_type):
-		unit_pool[unit_type].append(unit)
+	if not unit_pool.has(unit_type):
+		unit_pool[unit_type] = []
+	unit_pool[unit_type].append(unit)
 
 
 func clear_all_units() -> void:
@@ -77,10 +83,10 @@ func get_player_unit_count(player_id: int) -> int:
 
 
 func _init_pool() -> void:
-	for unit_type in UNIT_SCENES.keys():
+	for unit_type in GameConfig.get_unit_types():
 		unit_pool[unit_type] = []
 		for _index in prewarm_per_type:
-			var unit: Node = UNIT_SCENES[unit_type].instantiate()
+			var unit: Node = _get_scene_for_unit(unit_type).instantiate()
 			_get_units_container().add_child(unit)
 			unit.hide()
 			unit.process_mode = Node.PROCESS_MODE_DISABLED
@@ -88,10 +94,12 @@ func _init_pool() -> void:
 
 
 func _get_unit(unit_type: String) -> Node:
+	if not unit_pool.has(unit_type):
+		unit_pool[unit_type] = []
 	if unit_pool[unit_type].size() > 0:
 		return unit_pool[unit_type].pop_back()
 
-	var unit: Node = UNIT_SCENES[unit_type].instantiate()
+	var unit: Node = _get_scene_for_unit(unit_type).instantiate()
 	_get_units_container().add_child(unit)
 	return unit
 
@@ -129,6 +137,11 @@ func _count_player_units(player_id: int) -> int:
 			count += 1
 
 	return count
+
+
+func _get_scene_for_unit(unit_type: String) -> PackedScene:
+	var scene: PackedScene = SPECIAL_UNIT_SCENES.get(unit_type, GENERIC_UNIT_SCENE)
+	return scene
 
 
 func _on_unit_removed(unit: Node, _killer_player_id: int) -> void:

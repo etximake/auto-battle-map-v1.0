@@ -7,6 +7,7 @@ class_name RewardSlot
 @export var slot_color: Color = Color("#FFFFFF")
 
 @onready var background: Polygon2D = $Background
+@onready var border: Line2D = $Border
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var label: Label = $Label
 
@@ -27,17 +28,20 @@ func configure(new_player_id: int, new_reward_type: String, new_color: Color) ->
 
 
 func _setup_visual() -> void:
-	if background == null or collision_shape == null or label == null:
+	if background == null or border == null or collision_shape == null or label == null:
 		return
 
 	var half_size := slot_size * 0.5
-	background.polygon = PackedVector2Array([
+	var corners := PackedVector2Array([
 		Vector2(-half_size.x, -half_size.y),
 		Vector2(half_size.x, -half_size.y),
 		Vector2(half_size.x, half_size.y),
 		Vector2(-half_size.x, half_size.y),
 	])
+	background.polygon = corners
 	background.color = slot_color
+	border.points = corners
+	border.default_color = slot_color.darkened(0.45)
 
 	var shape := RectangleShape2D.new()
 	shape.size = slot_size
@@ -49,19 +53,17 @@ func _setup_visual() -> void:
 
 
 func _get_short_label() -> String:
-	match reward_type:
-		"Scout":
-			return "S"
-		"Soldier":
-			return "So"
-		"Tank":
-			return "T"
-		"Mage":
-			return "M"
-		"x2":
-			return "x2"
-		_:
-			return reward_type.left(2)
+	if reward_type == "x2":
+		return "x2"
+
+	var label_text := ""
+	for index in reward_type.length():
+		var character := reward_type.substr(index, 1)
+		if index == 0 or character == character.to_upper():
+			label_text += character.to_upper()
+		if label_text.length() >= 2:
+			return label_text
+	return reward_type.left(2).to_upper()
 
 
 func _on_area_entered(area: Area2D) -> void:

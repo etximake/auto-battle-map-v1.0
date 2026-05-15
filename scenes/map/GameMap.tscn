@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://game_map_scene"]
+[gd_scene load_steps=2 format=3 uid="uid://game_map_scene"]
 
 [ext_resource type="Script" path="res://scripts/map/GameMap.gd" id="1_map"]
-[ext_resource type="PackedScene" path="res://scenes/players/PlayerBase.tscn" id="2_base"]
 
 [node name="GameMap" type="Node2D"]
 script = ExtResource("1_map")
@@ -19,58 +18,10 @@ color = Color(0.290196, 0.486275, 0.247059, 0.32)
 
 [node name="Paths" type="Node2D" parent="."]
 
-[node name="Path_P0" type="Path2D" parent="Paths"]
-
-[node name="Path_P1" type="Path2D" parent="Paths"]
-
-[node name="Path_P2" type="Path2D" parent="Paths"]
-
-[node name="Path_P3" type="Path2D" parent="Paths"]
-
 [node name="PathVisual" type="Node2D" parent="."]
-
-[node name="PathLine_P0" type="Line2D" parent="PathVisual"]
-width = 40.0
-default_color = Color(0.909804, 0.772549, 0.423529, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
-
-[node name="PathLine_P1" type="Line2D" parent="PathVisual"]
-width = 40.0
-default_color = Color(0.909804, 0.772549, 0.423529, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
-
-[node name="PathLine_P2" type="Line2D" parent="PathVisual"]
-width = 40.0
-default_color = Color(0.909804, 0.772549, 0.423529, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
-
-[node name="PathLine_P3" type="Line2D" parent="PathVisual"]
-width = 40.0
-default_color = Color(0.909804, 0.772549, 0.423529, 1)
-joint_mode = 2
-begin_cap_mode = 2
-end_cap_mode = 2
 
 [node name="BaseMarkers" type="Node2D" parent="."]
 visible = false
-
-[node name="BaseMarker_0" type="Polygon2D" parent="BaseMarkers"]
-color = Color(0.905882, 0.298039, 0.235294, 0.65)
-
-[node name="BaseMarker_1" type="Polygon2D" parent="BaseMarkers"]
-color = Color(0.203922, 0.596078, 0.858824, 0.65)
-
-[node name="BaseMarker_2" type="Polygon2D" parent="BaseMarkers"]
-color = Color(0.180392, 0.8, 0.443137, 0.65)
-
-[node name="BaseMarker_3" type="Polygon2D" parent="BaseMarkers"]
-color = Color(0.945098, 0.768627, 0.0588235, 0.65)
 
 [node name="OptionalTowerMarkers" type="Node2D" parent="."]
 visible = false
@@ -100,22 +51,6 @@ color = Color(0.466667, 0.466667, 0.466667, 1)
 color = Color(0.466667, 0.466667, 0.466667, 1)
 
 [node name="Bases" type="Node2D" parent="."]
-
-[node name="Base_0" parent="Bases" instance=ExtResource("2_base")]
-position = Vector2(304, 134)
-player_id = 0
-
-[node name="Base_1" parent="Bases" instance=ExtResource("2_base")]
-position = Vector2(976, 134)
-player_id = 1
-
-[node name="Base_2" parent="Bases" instance=ExtResource("2_base")]
-position = Vector2(304, 586)
-player_id = 2
-
-[node name="Base_3" parent="Bases" instance=ExtResource("2_base")]
-position = Vector2(976, 586)
-player_id = 3
 
 [node name="SpawnedUnits" type="Node2D" parent="."]
 

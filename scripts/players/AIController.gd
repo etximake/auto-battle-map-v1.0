@@ -12,7 +12,7 @@ var balanced_index: int = 0
 func _ready() -> void:
 	add_to_group("ai_controllers")
 	if player_id >= 0 and player_id < GameConfig.ai_strategies.size():
-		strategy = GameConfig.ai_strategies[player_id]
+		strategy = GameConfig.get_ai_strategy(player_id)
 	var targets := _get_targets()
 	if not targets.is_empty():
 		balanced_index = player_id % targets.size()
@@ -58,7 +58,7 @@ func _get_targets() -> Array[int]:
 		return targets
 
 	var result: Array[int] = []
-	for index in GameConfig.player_count:
+	for index in range(GameConfig.get_player_count()):
 		if index != player_id:
 			result.append(index)
 	return result
@@ -82,7 +82,7 @@ func _choose_nearest_target(targets: Array[int]) -> int:
 
 
 func _choose_balanced_target(targets: Array[int], unit_type: String) -> int:
-	if unit_type == "Tank":
+	if ["Tank", "Hammer"].has(unit_type):
 		return _get_opposite_player()
 
 	var target := targets[balanced_index % targets.size()]
@@ -110,17 +110,24 @@ func _count_units_for_player(target_player_id: int) -> int:
 
 
 func _get_opposite_player() -> int:
-	match player_id:
-		0:
-			return 3
-		1:
-			return 2
-		2:
-			return 1
-		3:
-			return 0
-		_:
-			return (player_id + 1) % maxi(GameConfig.player_count, 1)
+	var targets := _get_targets()
+	if targets.is_empty():
+		return (player_id + 1) % maxi(GameConfig.get_player_count(), 1)
+
+	var game_map := _get_game_map()
+	if game_map == null or not game_map.has_method("get_base_position"):
+		return targets[0]
+
+	var my_position: Vector2 = game_map.call("get_base_position", player_id)
+	var best_target := targets[0]
+	var best_distance := -1.0
+	for target_id in targets:
+		var target_position: Vector2 = game_map.call("get_base_position", target_id)
+		var distance := my_position.distance_to(target_position)
+		if distance > best_distance:
+			best_distance = distance
+			best_target = target_id
+	return best_target
 
 
 func _get_game_map() -> Node:

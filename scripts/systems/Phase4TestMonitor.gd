@@ -27,7 +27,7 @@ func _process(delta: float) -> void:
 
 	var active_units: int = spawn_manager.get_active_unit_count()
 	var gold_values: Array[float] = []
-	for player_id in range(GameConfig.player_count):
+	for player_id in range(GameConfig.get_player_count()):
 		gold_values.append(resource_manager.get_gold(player_id))
 
 	if active_units <= 0:

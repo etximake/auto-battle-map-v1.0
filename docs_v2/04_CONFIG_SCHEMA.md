@@ -40,6 +40,7 @@ GameConfig.gd safe defaults
     "left_panel_width": 192,
     "right_panel_x": 1088,
     "map_rect": [192, 0, 896, 720],
+    "position_variant": "default",
     "castle_positions": [[304,134], [976,134], [304,360], [976,360], [304,586], [976,586]],
     "spawn_offsets": [[28,18], [-28,18], [28,0], [-28,0], [28,-18], [-28,-18]]
   },
@@ -134,3 +135,37 @@ func get_castle_position(player_id: int) -> Vector2
 func get_spawn_position(player_id: int) -> Vector2
 func get_reward_slot_order() -> Array[String]
 ```
+
+## 5. Player count layouts
+
+Use `layout.player_count_layouts` when the map needs different positions for
+different team counts.
+
+```json
+{
+  "layout": {
+    "position_variant": "default",
+    "player_count_layouts": {
+      "2": {
+        "variants": {
+          "default": {"castle_positions": [[304,360], [976,360]], "spawn_offsets": [[28,0], [-28,0]]},
+          "vertical": {"castle_positions": [[640,150], [640,570]]},
+          "diagonal": {"castle_positions": [[304,170], [976,550]]},
+          "close_center": {"castle_positions": [[424,360], [856,360]]}
+        }
+      },
+      "4": {
+        "variants": {
+          "default": {"castle_positions": [[304,220], [976,220], [304,500], [976,500]]},
+          "corners": {"castle_positions": [[304,140], [976,140], [304,580], [976,580]]},
+          "diamond": {"castle_positions": [[640,128], [980,360], [640,592], [300,360]]},
+          "staggered": {"castle_positions": [[304,165], [976,270], [304,555], [976,450]]}
+        }
+      },
+      "6": {"castle_positions": [[304,134], [976,134], [304,360], [976,360], [304,586], [976,586]]}
+    }
+  }
+}
+```
+
+Full ASCII maps are in `docs_v2/08_MAP_POSITION_PRESETS.md`.

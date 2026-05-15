@@ -29,7 +29,7 @@ func _reset_scores() -> void:
 	scores.clear()
 	kill_counts.clear()
 	castle_damage.clear()
-	for player_id in GameConfig.player_count:
+	for player_id in range(GameConfig.get_player_count()):
 		scores[player_id] = 0
 		kill_counts[player_id] = 0
 		castle_damage[player_id] = 0.0

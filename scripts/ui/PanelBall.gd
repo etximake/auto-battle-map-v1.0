@@ -67,18 +67,16 @@ func _redirect_from_anchor() -> void:
 		if distance > anchor_radius + radius:
 			continue
 
-		var away := position - anchor_position
-		if away.length_squared() < 0.01:
-			away = Vector2(randf_range(-1.0, 1.0), 1.0)
-		away = away.normalized()
-
+		var normal := (position - anchor_position).normalized()
+		if normal.length_squared() < 0.01:
+			normal = Vector2(randf_range(-0.5, 0.5), 1.0).normalized()
 		var speed := maxf(velocity.length(), 120.0)
-		position = anchor_position + away * (anchor_radius + radius + 1.0)
-		velocity = Vector2(
-			away.x * speed + randf_range(-45.0, 45.0),
-			absf(away.y) * speed + speed * 0.35
-		).limit_length(speed * 1.25)
-		anchor_cooldown = 0.12
+		position = anchor_position + normal * (anchor_radius + radius + 1.0)
+		velocity = velocity.bounce(normal).rotated(randf_range(-0.12, 0.12))
+		if velocity.y < speed * 0.12:
+			velocity.y = speed * 0.12
+		velocity = velocity.normalized() * speed
+		anchor_cooldown = 0.08
 		return
 
 
@@ -86,7 +84,7 @@ func _bounce_inside_panel() -> void:
 	var min_x := panel_bounds.position.x + radius
 	var max_x := panel_bounds.end.x - radius
 	var min_y := panel_bounds.position.y + radius
-	var max_y := panel_bounds.end.y + radius
+	var max_y := panel_bounds.end.y - radius
 
 	if position.x < min_x:
 		position.x = min_x
@@ -99,7 +97,8 @@ func _bounce_inside_panel() -> void:
 		position.y = min_y
 		velocity.y = absf(velocity.y)
 	elif position.y > max_y:
-		despawn()
+		position.y = max_y
+		velocity.y = -absf(velocity.y)
 
 
 func _setup_visual() -> void:
