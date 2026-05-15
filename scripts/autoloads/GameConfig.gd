@@ -29,8 +29,14 @@ var unit_waypoint_distance: float = 7.0
 var castle_max_hp: float = 500.0
 var castle_spawn_cooldown: float = 1.0
 var castle_queue_limit: int = 40
+var castle_shoot_range: float = 120.0
+var castle_shoot_damage: float = 10.0
+var castle_shoot_cooldown: float = 1.5
+var castle_projectile_speed: float = 300.0
+var castle_target_priority: String = "nearest"
 var max_units_per_player: int = 30
 var max_total_units: int = 120
+var max_projectiles: int = 80
 var neutral_towers_enabled: bool = false
 func _ready() -> void:
 	load_config()
@@ -52,12 +58,7 @@ func get_unit_config(unit_type: String) -> Dictionary:
 func get_auto_battle_value(key: String, fallback: float) -> float:
 	return maxf(float(auto_battle_config.get(key, fallback)), 0.0)
 func get_config_summary() -> String:
-	return "players=%d round=%.1f ball_spawn=%.2f rewards=%s" % [
-		player_count,
-		round_duration,
-		ball_panel_spawn_interval,
-		",".join(reward_slot_order),
-	]
+	return "players=%d round=%.1f ball_spawn=%.2f rewards=%s" % [player_count, round_duration, ball_panel_spawn_interval, ",".join(reward_slot_order)]
 func _load_json_file(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {}
@@ -121,10 +122,16 @@ func _apply_castle(value: Variant) -> void:
 	castle_max_hp = float(castle_config.get("max_hp", 500.0))
 	castle_spawn_cooldown = float(castle_config.get("spawn_cooldown", 1.0))
 	castle_queue_limit = int(castle_config.get("queue_limit", 40))
+	castle_shoot_range = float(castle_config.get("shoot_range", 120.0))
+	castle_shoot_damage = float(castle_config.get("shoot_damage", 10.0))
+	castle_shoot_cooldown = float(castle_config.get("shoot_cooldown", 1.5))
+	castle_projectile_speed = float(castle_config.get("projectile_speed", 300.0))
+	castle_target_priority = String(castle_config.get("target_priority", "nearest"))
 func _apply_limits(value: Variant) -> void:
 	var limits := _to_dictionary(value)
 	max_units_per_player = int(limits.get("max_units_per_player", 30))
 	max_total_units = int(limits.get("max_total_units", 120))
+	max_projectiles = int(limits.get("max_projectiles", 80))
 func _validate_config() -> void:
 	player_count = clampi(player_count, 2, 6)
 	round_duration = maxf(round_duration, 10.0)
@@ -136,9 +143,17 @@ func _validate_config() -> void:
 	ball_panel_anchor_radius = maxf(ball_panel_anchor_radius, 1.0)
 	ball_panel_anchor_reward_gap = maxf(ball_panel_anchor_reward_gap, 64.0)
 	unit_waypoint_distance = clampf(unit_waypoint_distance, 2.0, 24.0)
+	castle_max_hp = maxf(castle_max_hp, 1.0)
 	castle_queue_limit = clampi(castle_queue_limit, 1, 200)
+	castle_shoot_range = maxf(castle_shoot_range, 0.0)
+	castle_shoot_damage = maxf(castle_shoot_damage, 0.0)
+	castle_shoot_cooldown = maxf(castle_shoot_cooldown, 0.1)
+	castle_projectile_speed = maxf(castle_projectile_speed, 1.0)
+	if not ["nearest", "lowest_hp", "first_entered"].has(castle_target_priority):
+		castle_target_priority = "nearest"
 	max_units_per_player = clampi(max_units_per_player, 1, 200)
 	max_total_units = max(max_total_units, max_units_per_player)
+	max_projectiles = clampi(max_projectiles, 1, 500)
 	_validate_colors()
 	_validate_rewards()
 func _validate_colors() -> void:
@@ -165,13 +180,9 @@ func _parse_string_array(value: Variant) -> Array[String]:
 		result.append(String(item))
 	return result
 func _to_dictionary(value: Variant) -> Dictionary:
-	if typeof(value) == TYPE_DICTIONARY:
-		return value as Dictionary
-	return {}
+	return (value as Dictionary) if typeof(value) == TYPE_DICTIONARY else {}
 func _to_array(value: Variant) -> Array:
-	if typeof(value) == TYPE_ARRAY:
-		return value as Array
-	return []
+	return (value as Array) if typeof(value) == TYPE_ARRAY else []
 func _get_default_config() -> Dictionary:
 	return {
 		"game_mode": "base",
@@ -180,14 +191,9 @@ func _get_default_config() -> Dictionary:
 		"ball_panel": {"spawn_interval": 0.7, "ball_speed": 165.0, "max_live_balls": 8, "anchor_count": 6, "anchor_radius": 11.0, "anchor_min_y": 56.0, "anchor_reward_gap": 112.0},
 		"rewards": {"slot_order": VALID_REWARDS, "x2_mode": "next_reward"},
 		"auto_battle": {"castle_unit_damage_multiplier": 1.0, "unit_kill_score": 5, "castle_damage_score_per_point": 0.1, "castle_destroy_score": 50},
-		"units": {
-			"Scout": {"hp": 20, "damage": 5, "speed": 190, "range": 28, "cooldown": 0.8, "visual_radius": 12, "collision_radius": 7},
-			"Soldier": {"hp": 50, "damage": 15, "speed": 140, "range": 34, "cooldown": 1.0, "visual_radius": 15, "collision_radius": 9},
-			"Tank": {"hp": 150, "damage": 8, "speed": 85, "range": 32, "cooldown": 1.5, "visual_radius": 18, "collision_radius": 11},
-			"Mage": {"hp": 30, "damage": 40, "speed": 115, "range": 85, "cooldown": 2.0, "visual_radius": 14, "collision_radius": 8},
-		},
+		"units": {"Scout": {"hp": 20, "damage": 5, "speed": 190, "range": 28, "cooldown": 0.8, "visual_radius": 12, "collision_radius": 7}, "Soldier": {"hp": 50, "damage": 15, "speed": 140, "range": 34, "cooldown": 1.0, "visual_radius": 15, "collision_radius": 9}, "Tank": {"hp": 150, "damage": 8, "speed": 85, "range": 32, "cooldown": 1.5, "visual_radius": 18, "collision_radius": 11}, "Mage": {"hp": 30, "damage": 40, "speed": 115, "range": 85, "cooldown": 2.0, "visual_radius": 14, "collision_radius": 8}},
 		"unit_behavior": {"body_collision_enabled": false, "waypoint_distance": 7.0},
-		"castle": {"max_hp": 500.0, "spawn_cooldown": 1.0, "queue_limit": 40},
-		"limits": {"max_units_per_player": 30, "max_total_units": 120},
+		"castle": {"max_hp": 500.0, "spawn_cooldown": 1.0, "queue_limit": 40, "shoot_range": 120.0, "shoot_damage": 10.0, "shoot_cooldown": 1.5, "projectile_speed": 300.0, "target_priority": "nearest"},
+		"limits": {"max_units_per_player": 30, "max_total_units": 120, "max_projectiles": 80},
 		"optional_modes": {"neutral_towers_enabled": false},
 	}

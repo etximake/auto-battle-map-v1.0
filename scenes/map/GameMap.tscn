@@ -118,3 +118,5 @@ position = Vector2(976, 586)
 player_id = 3
 
 [node name="SpawnedUnits" type="Node2D" parent="."]
+
+[node name="Projectiles" type="Node2D" parent="."]

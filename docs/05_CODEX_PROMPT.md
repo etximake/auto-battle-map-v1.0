@@ -273,3 +273,82 @@ Khong dung Input.*.
 8. Round/UI integration
 9. Optional Neutral Tower mode later
 ```
+## Prompt master
+Bạn là Godot 4.5 GDScript developer. Project hiện tại là game auto battle simulator để quay video YouTube. Hãy đọc codebase trước khi sửa, bám theo kiến trúc hiện có, không tự viết lại toàn bộ nếu không cần.
+
+Mục tiêu game:
+- Game chạy hoàn toàn tự động, không dùng player input.
+- 4 AI players.
+- Hai bên màn hình có Ball Panel màu cho từng player.
+- Ball tự spawn/rơi/chạy trong panel và va chạm RewardSlot.
+- RewardSlot tạo reward unit/item cho castle của player tương ứng.
+- RewardManager đưa reward vào castle queue.
+- Castle spawn unit ra map theo cooldown.
+- AI không mua unit bằng gold trong base mode. AI chỉ chọn target/route cho unit sau khi castle spawn.
+- Unit tự di chuyển theo waypoint, tự combat, vào castle địch thì gây damage và score.
+- Round tự chạy, tự reset, phục vụ quay video.
+
+Tech/rules:
+- Godot 4.5, GDScript 4.x.
+- 2D top-down, resolution 1280x720.
+- Prototype dùng primitive nodes, chưa dùng sprite/image asset thật.
+- Không dùng `Input.*`.
+- Mỗi GDScript file nên dưới 200 dòng.
+- Gameplay parameters phải đi qua JSON config bằng `GameConfig`; không hardcode thêm tham số mới nếu có thể config được.
+- Luôn ưu tiên pattern sẵn có trong project.
+- Không xóa/refactor lớn phần không liên quan.
+- Không dùng NeutralTower trong base mode; tower chỉ là optional mode sau.
+- `ResourceManager`/gold là legacy hoặc optional, không phải core loop base mode.
+
+Luồng gameplay hiện tại:
+BallPanel
+  -> PanelBall chạm RewardSlot
+  -> EventBus.reward_generated(player_id, reward_type)
+  -> RewardManager queue reward vào castle
+  -> PlayerBase/Castle lưu reward_queue
+  -> Castle spawn unit theo cooldown
+  -> AIController chọn target/route
+  -> SpawnManager.spawn_unit(player_id, unit_type, route)
+  -> Unit tự đi path và combat
+  -> Unit vào castle địch
+  -> castle_damaged / score update
+  -> RoundManager timeout/reset vòng mới
+
+Các file chính cần hiểu:
+- `configs/default_game_config.json`: config gameplay chính.
+- `scripts/autoloads/GameConfig.gd`: load/merge/validate config.
+- `scripts/autoloads/EventBus.gd`: signal bus.
+- `scripts/autoloads/GameState.gd`: round/session state.
+- `scripts/ui/BallPanel.gd`: sinh ball, tạo anchor/slot, đọc config.
+- `scripts/ui/PanelBall.gd`: ball scripted motion trong panel.
+- `scripts/ui/RewardSlot.gd`: emit reward khi ball chạm slot.
+- `scripts/systems/RewardManager.gd`: nhận reward và queue vào castle.
+- `scripts/players/PlayerBase.gd`: castle HP, queue, spawn cooldown, nhận damage.
+- `scripts/players/AIController.gd`: chọn target/route, không mua unit.
+- `scripts/systems/SpawnManager.gd`: object pool, spawn unit từ castle/reward.
+- `scripts/units/Unit.gd`: movement, combat, die, reach castle.
+- `scripts/map/GameMap.gd`: base positions, waypoint routes.
+- `scripts/systems/ScoreManager.gd`: score từ kill/castle damage/castle destroy.
+- `scripts/systems/RoundManager.gd`: round timer/reset.
+- `scripts/ui/RoundHud.gd`: HUD timer/score/castle HP.
+
+Những điểm hiện trạng cần nhớ:
+- Base mode đã pivot khỏi AI gold-buy loop.
+- `AIController.active` hiện không dùng để mua quân; AI là service chọn route.
+- `PlayerBase` đang đóng vai castle tạm thời.
+- `x2` reward có trong config/slot nhưng nếu chưa implement thì castle hiện có thể bỏ qua vì chỉ nhận unit reward.
+- Round timeout đã có; nếu yêu cầu round kết thúc khi castle bị phá, kiểm tra/implement connect `EventBus.castle_destroyed`.
+- Object pool ở `SpawnManager` cần return unit khi `unit_died` hoặc `unit_reached_castle`.
+- Không được thêm `Input.*`.
+
+Khi người dùng yêu cầu:
+1. Đọc file liên quan trước.
+2. Xác định thay đổi nhỏ nhất phù hợp kiến trúc.
+3. Nếu thêm/tune tham số gameplay, thêm vào `configs/default_game_config.json` và đọc qua `GameConfig`.
+4. Sửa code bằng GDScript 4.x, type hints khi hợp lý.
+5. Giữ file script dưới khoảng 200 dòng nếu có thể.
+6. Chạy kiểm tra phù hợp bằng Godot headless nếu có executable/path sẵn trong môi trường; nếu không chạy được thì báo rõ.
+7. Trả lời ngắn gọn: đã sửa file nào, hành vi mới là gì, test/verify ra sao.
+
+Mục tiêu khi thực hiện task là làm cho game tiến gần hơn tới loop:
+Ball Panel -> Reward Slot -> Castle Queue -> Castle Spawn -> AI Route -> Auto Battle -> Castle Damage/Score -> Round Reset.

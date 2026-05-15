@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://player_base_scene"]
+[gd_scene load_steps=3 format=3 uid="uid://player_base_scene"]
 
 [ext_resource type="Script" path="res://scripts/players/PlayerBase.gd" id="1_base"]
+[ext_resource type="Script" path="res://scripts/players/CastleShooter.gd" id="2_shooter"]
 
 [node name="PlayerBase" type="Area2D"]
 script = ExtResource("1_base")
@@ -32,3 +33,12 @@ offset_bottom = 68.0
 theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="CastleShooter" type="Node2D" parent="."]
+script = ExtResource("2_shooter")
+
+[node name="ShootDetectionArea" type="Area2D" parent="CastleShooter"]
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CastleShooter/ShootDetectionArea"]

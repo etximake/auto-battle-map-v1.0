@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://test_castle_shooter_scene"]
+
+[ext_resource type="PackedScene" path="res://scenes/map/GameMap.tscn" id="1_map"]
+[ext_resource type="Script" path="res://scripts/systems/ScoreManager.gd" id="2_score"]
+[ext_resource type="Script" path="res://scripts/systems/CastleShooterTestMonitor.gd" id="3_monitor"]
+
+[node name="TestCastleShooter" type="Node2D"]
+
+[node name="GameMap" parent="." instance=ExtResource("1_map")]
+
+[node name="Systems" type="Node" parent="."]
+
+[node name="ScoreManager" type="Node" parent="Systems"]
+script = ExtResource("2_score")
+
+[node name="CastleShooterTestMonitor" type="Node" parent="Systems"]
+script = ExtResource("3_monitor")
