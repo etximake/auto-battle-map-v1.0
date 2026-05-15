@@ -184,16 +184,29 @@
       "range": "Tam danh cua unit.",
       "cooldown": "Thoi gian cho giua 2 lan danh.",
       "visual_radius": "Ban kinh hien thi prototype.",
-      "collision_radius": "Ban kinh va cham prototype."
+      "collision_radius": "Ban kinh va cham prototype.",
+      "role": "Vai tro chien thuat cua unit.",
+      "attack_style": "Kieu gay damage/visual attack cua unit.",
+      "target_priority": "Cach chon muc tieu uu tien cua unit.",
+      "prefer_units_over_castle": "Neu true thi unit uu tien danh enemy unit truoc castle.",
+      "detection_range": "Tam unit quet de tim muc tieu moi.",
+      "chase_range": "Tam toi da unit bam duoi target hien tai.",
+      "retarget_interval": "Khoang thoi gian giua cac lan danh gia lai target.",
+      "hold_distance": "Khoang cach muon giu voi target, dung cho ranged unit.",
+      "separation_radius": "Ban kinh tranh chong len unit cung team.",
+      "separation_strength": "Do manh cua luc tach khoi unit cung team.",
+      "castle_aggression": "Muc uu tien tan cong castle, 0..1.",
+      "low_hp_focus": "Muc uu tien ket lieu target mau thap, 0..1.",
+      "frontline_bias": "Muc thien huong dung tuyen truoc, 0..1."
     },
-    "Melee": {"hp": 45, "damage": 14, "speed": 145, "range": 32, "cooldown": 0.95, "visual_radius": 14, "collision_radius": 8},
-    "Archer": {"hp": 28, "damage": 12, "speed": 135, "range": 95, "cooldown": 1.15, "visual_radius": 13, "collision_radius": 7},
-    "Gunner": {"hp": 35, "damage": 8, "speed": 150, "range": 105, "cooldown": 0.65, "visual_radius": 13, "collision_radius": 7},
-    "Hammer": {"hp": 75, "damage": 28, "speed": 105, "range": 36, "cooldown": 1.6, "visual_radius": 16, "collision_radius": 10},
-    "Tank": {"hp": 150, "damage": 8, "speed": 85, "range": 32, "cooldown": 1.5, "visual_radius": 18, "collision_radius": 11},
-    "Mage": {"hp": 30, "damage": 40, "speed": 115, "range": 85, "cooldown": 2.0, "visual_radius": 14, "collision_radius": 8},
-    "Scout": {"hp": 20, "damage": 5, "speed": 190, "range": 28, "cooldown": 0.8, "visual_radius": 12, "collision_radius": 7},
-    "Soldier": {"hp": 50, "damage": 15, "speed": 140, "range": 34, "cooldown": 1.0, "visual_radius": 15, "collision_radius": 9}
+    "Melee": {"hp": 45, "damage": 14, "speed": 145, "range": 32, "cooldown": 0.95, "visual_radius": 14, "collision_radius": 8, "role": "melee_basic", "attack_style": "melee_hit", "target_priority": "nearest_unit", "prefer_units_over_castle": true, "detection_range": 145, "chase_range": 240, "retarget_interval": 0.45, "hold_distance": 0, "separation_radius": 22, "separation_strength": 0.45, "castle_aggression": 0.45, "low_hp_focus": 0.0, "frontline_bias": 0.4},
+    "Archer": {"hp": 28, "damage": 12, "speed": 135, "range": 95, "cooldown": 1.15, "visual_radius": 13, "collision_radius": 7, "role": "archer_ranged", "attack_style": "arrow_shot", "target_priority": "nearest_unit", "prefer_units_over_castle": true, "detection_range": 220, "chase_range": 300, "retarget_interval": 0.35, "hold_distance": 75, "separation_radius": 24, "separation_strength": 0.6, "castle_aggression": 0.25, "low_hp_focus": 0.2, "frontline_bias": 0.0},
+    "Gunner": {"hp": 35, "damage": 8, "speed": 150, "range": 105, "cooldown": 0.65, "visual_radius": 13, "collision_radius": 7, "role": "gunner_rapid", "attack_style": "rapid_fire", "target_priority": "lowest_hp_unit", "prefer_units_over_castle": true, "detection_range": 210, "chase_range": 300, "retarget_interval": 0.25, "hold_distance": 85, "separation_radius": 22, "separation_strength": 0.55, "castle_aggression": 0.3, "low_hp_focus": 0.8, "frontline_bias": 0.0},
+    "Hammer": {"hp": 75, "damage": 28, "speed": 105, "range": 36, "cooldown": 1.6, "visual_radius": 16, "collision_radius": 10, "role": "hammer_breaker", "attack_style": "heavy_slam", "target_priority": "toughest_unit", "prefer_units_over_castle": true, "detection_range": 150, "chase_range": 250, "retarget_interval": 0.75, "hold_distance": 0, "separation_radius": 20, "separation_strength": 0.35, "castle_aggression": 0.8, "low_hp_focus": 0.0, "frontline_bias": 0.8},
+    "Tank": {"hp": 150, "damage": 8, "speed": 85, "range": 32, "cooldown": 1.5, "visual_radius": 18, "collision_radius": 11, "role": "tank_frontline", "attack_style": "heavy_body_hit", "target_priority": "any_nearest_enemy", "prefer_units_over_castle": true, "detection_range": 130, "chase_range": 220, "retarget_interval": 0.8, "hold_distance": 0, "separation_radius": 18, "separation_strength": 0.3, "castle_aggression": 0.65, "low_hp_focus": 0.0, "frontline_bias": 1.0},
+    "Mage": {"hp": 30, "damage": 40, "speed": 115, "range": 85, "cooldown": 2.0, "visual_radius": 14, "collision_radius": 8, "role": "mage_burst", "attack_style": "magic_bolt", "target_priority": "lowest_hp_unit", "prefer_units_over_castle": true, "detection_range": 220, "chase_range": 310, "retarget_interval": 0.4, "hold_distance": 70, "separation_radius": 24, "separation_strength": 0.6, "castle_aggression": 0.35, "low_hp_focus": 0.7, "frontline_bias": 0.0},
+    "Scout": {"hp": 20, "damage": 5, "speed": 190, "range": 28, "cooldown": 0.8, "visual_radius": 12, "collision_radius": 7, "role": "scout_assassin", "attack_style": "quick_stab", "target_priority": "lowest_hp_unit", "prefer_units_over_castle": true, "detection_range": 210, "chase_range": 330, "retarget_interval": 0.2, "hold_distance": 0, "separation_radius": 18, "separation_strength": 0.5, "castle_aggression": 0.35, "low_hp_focus": 1.0, "frontline_bias": 0.1},
+    "Soldier": {"hp": 50, "damage": 15, "speed": 140, "range": 34, "cooldown": 1.0, "visual_radius": 15, "collision_radius": 9, "role": "soldier_balanced", "attack_style": "steady_slash", "target_priority": "nearest_unit", "prefer_units_over_castle": true, "detection_range": 155, "chase_range": 255, "retarget_interval": 0.4, "hold_distance": 0, "separation_radius": 24, "separation_strength": 0.55, "castle_aggression": 0.5, "low_hp_focus": 0.2, "frontline_bias": 0.5}
   },
   "unit_behavior": {
     "_fields": {

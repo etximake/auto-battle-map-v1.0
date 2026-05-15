@@ -129,6 +129,7 @@ func get_player_count() -> int
 func get_player_color(player_id: int) -> Color
 func get_ai_strategy(player_id: int) -> String
 func get_unit_config(unit_type: String) -> Dictionary
+func get_unit_behavior_config(unit_type: String) -> Dictionary
 func get_unit_stat(unit_type: String, stat_name: String, default_value: float = 0.0) -> float
 func get_castle_config() -> Dictionary
 func get_castle_position(player_id: int) -> Vector2
@@ -169,3 +170,99 @@ different team counts.
 ```
 
 Full ASCII maps are in `docs_v2/08_MAP_POSITION_PRESETS.md`.
+
+## 6. Unit behavior profile
+
+Each unit can define a behavior profile in the same object as its stats.
+
+Example:
+
+```json
+{
+  "units": {
+    "Scout": {
+      "hp": 20,
+      "damage": 5,
+      "speed": 190,
+      "range": 28,
+      "cooldown": 0.8,
+      "visual_radius": 12,
+      "collision_radius": 7,
+      "role": "scout_assassin",
+      "attack_style": "quick_stab",
+      "target_priority": "lowest_hp_unit",
+      "prefer_units_over_castle": true,
+      "detection_range": 210,
+      "chase_range": 330,
+      "retarget_interval": 0.2,
+      "hold_distance": 0,
+      "separation_radius": 18,
+      "separation_strength": 0.5,
+      "castle_aggression": 0.35,
+      "low_hp_focus": 1.0,
+      "frontline_bias": 0.1
+    }
+  }
+}
+```
+
+Allowed `role` values:
+
+```text
+melee_basic
+soldier_balanced
+tank_frontline
+scout_assassin
+archer_ranged
+gunner_rapid
+hammer_breaker
+mage_burst
+```
+
+Allowed `attack_style` values:
+
+```text
+melee_hit
+steady_slash
+heavy_body_hit
+quick_stab
+arrow_shot
+rapid_fire
+heavy_slam
+magic_bolt
+```
+
+Allowed `target_priority` values:
+
+```text
+nearest_unit
+lowest_hp_unit
+nearest_castle
+objective_castle
+toughest_unit
+any_nearest_enemy
+```
+
+Validation rules:
+
+```text
+invalid role: fallback melee_basic
+invalid attack_style: fallback melee_hit
+invalid target_priority: fallback nearest_unit
+detection_range: clamp 0..1000
+chase_range: clamp detection_range..1500
+retarget_interval: clamp 0.05..5.0
+hold_distance: clamp 0..unit.range
+separation_radius: clamp 0..96
+separation_strength: clamp 0..2
+castle_aggression: clamp 0..1
+low_hp_focus: clamp 0..1
+frontline_bias: clamp 0..1
+```
+
+Design note:
+
+```text
+Phase 1 only exposes and validates these fields.
+Unit.gd should consume them in later Unit phases.
+```

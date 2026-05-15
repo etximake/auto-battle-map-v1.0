@@ -2,6 +2,34 @@ extends Node
 const DEFAULT_CONFIG_PATH := "res://configs/default_game_config.json"
 const USER_CONFIG_PATH := "user://game_config_override.json"
 const DEFAULT_REWARDS: Array[String] = ["Melee", "Archer", "Gunner", "Hammer", "Tank", "Mage", "x2"]
+const DEFAULT_UNIT_BEHAVIOR_PROFILE = {
+	"role": "melee_basic",
+	"attack_style": "melee_hit",
+	"target_priority": "nearest_unit",
+	"prefer_units_over_castle": true,
+	"detection_range": 160.0,
+	"chase_range": 260.0,
+	"retarget_interval": 0.45,
+	"hold_distance": 0.0,
+	"separation_radius": 22.0,
+	"separation_strength": 0.45,
+	"castle_aggression": 0.5,
+	"low_hp_focus": 0.0,
+	"frontline_bias": 0.0,
+}
+const UNIT_BEHAVIOR_OVERRIDES = {
+	"Melee": {"role": "melee_basic", "attack_style": "melee_hit", "target_priority": "nearest_unit", "detection_range": 145.0, "chase_range": 240.0, "retarget_interval": 0.45, "hold_distance": 0.0, "castle_aggression": 0.45},
+	"Soldier": {"role": "soldier_balanced", "attack_style": "steady_slash", "target_priority": "nearest_unit", "detection_range": 155.0, "chase_range": 255.0, "retarget_interval": 0.4, "hold_distance": 0.0, "separation_radius": 24.0, "separation_strength": 0.55, "castle_aggression": 0.5},
+	"Tank": {"role": "tank_frontline", "attack_style": "heavy_body_hit", "target_priority": "any_nearest_enemy", "detection_range": 130.0, "chase_range": 220.0, "retarget_interval": 0.8, "hold_distance": 0.0, "separation_radius": 18.0, "separation_strength": 0.3, "castle_aggression": 0.65, "frontline_bias": 1.0},
+	"Scout": {"role": "scout_assassin", "attack_style": "quick_stab", "target_priority": "lowest_hp_unit", "detection_range": 210.0, "chase_range": 330.0, "retarget_interval": 0.2, "hold_distance": 0.0, "separation_radius": 18.0, "separation_strength": 0.5, "castle_aggression": 0.35, "low_hp_focus": 1.0},
+	"Archer": {"role": "archer_ranged", "attack_style": "arrow_shot", "target_priority": "nearest_unit", "detection_range": 220.0, "chase_range": 300.0, "retarget_interval": 0.35, "hold_distance": 75.0, "separation_radius": 24.0, "separation_strength": 0.6, "castle_aggression": 0.25},
+	"Gunner": {"role": "gunner_rapid", "attack_style": "rapid_fire", "target_priority": "lowest_hp_unit", "detection_range": 210.0, "chase_range": 300.0, "retarget_interval": 0.25, "hold_distance": 85.0, "separation_radius": 22.0, "separation_strength": 0.55, "castle_aggression": 0.3, "low_hp_focus": 0.8},
+	"Hammer": {"role": "hammer_breaker", "attack_style": "heavy_slam", "target_priority": "toughest_unit", "detection_range": 150.0, "chase_range": 250.0, "retarget_interval": 0.75, "hold_distance": 0.0, "separation_radius": 20.0, "separation_strength": 0.35, "castle_aggression": 0.8, "frontline_bias": 0.8},
+	"Mage": {"role": "mage_burst", "attack_style": "magic_bolt", "target_priority": "lowest_hp_unit", "detection_range": 220.0, "chase_range": 310.0, "retarget_interval": 0.4, "hold_distance": 70.0, "separation_radius": 24.0, "separation_strength": 0.6, "castle_aggression": 0.35, "low_hp_focus": 0.7},
+}
+const VALID_UNIT_ROLES: Array[String] = ["melee_basic", "soldier_balanced", "tank_frontline", "scout_assassin", "archer_ranged", "gunner_rapid", "hammer_breaker", "mage_burst"]
+const VALID_ATTACK_STYLES: Array[String] = ["melee_hit", "steady_slash", "heavy_body_hit", "quick_stab", "arrow_shot", "rapid_fire", "heavy_slam", "magic_bolt"]
+const VALID_UNIT_TARGET_PRIORITIES: Array[String] = ["nearest_unit", "lowest_hp_unit", "nearest_castle", "objective_castle", "toughest_unit", "any_nearest_enemy"]
 var game_mode: String = "base"
 var player_count: int = 4; var players_count: int = 4; var player_max_count: int = 6
 var player_colors: Array[Color] = []; var ai_strategies: Array[String] = []; var layout_config: Dictionary = {}
@@ -62,6 +90,12 @@ func is_unit_type(unit_type: String) -> bool: return not unit_type.begins_with("
 func get_unit_config(unit_type: String) -> Dictionary:
 	var config: Dictionary = unit_configs.get(unit_type, {})
 	return config.duplicate(true)
+func get_unit_behavior_config(unit_type: String) -> Dictionary:
+	var config := get_unit_config(unit_type)
+	var behavior := DEFAULT_UNIT_BEHAVIOR_PROFILE.duplicate(true)
+	for key in behavior.keys():
+		behavior[key] = config.get(key, behavior[key])
+	return behavior
 func get_auto_battle_value(key: String, fallback: float) -> float: return maxf(float(auto_battle_config.get(key, fallback)), 0.0)
 func get_config_summary() -> String:
 	return "players=%d round=%.1f ball_spawn=%.2f rewards=%s" % [player_count, round_duration, ball_panel_spawn_interval, ",".join(reward_slot_order)]
@@ -159,6 +193,7 @@ func _validate_config() -> void:
 		castle_target_priority = "nearest"
 	max_units_per_player = clampi(max_units_per_player, 1, 200); max_total_units = max(max_total_units, max_units_per_player); max_projectiles = clampi(max_projectiles, 1, 500)
 	reward_max_active_slots = clampi(reward_max_active_slots, 1, reward_slot_order.size())
+	_validate_unit_configs()
 	_validate_colors()
 	_validate_rewards()
 func _validate_colors() -> void:
@@ -176,6 +211,35 @@ func _validate_rewards() -> void:
 	if filtered.is_empty():
 		filtered = DEFAULT_REWARDS.duplicate()
 	reward_slot_order = filtered.slice(0, reward_max_active_slots)
+func _validate_unit_configs() -> void:
+	for unit_type in unit_configs.keys():
+		var key := String(unit_type)
+		if key.begins_with("_"):
+			continue
+		var config := _to_dictionary(unit_configs[unit_type])
+		var merged := DEFAULT_UNIT_BEHAVIOR_PROFILE.duplicate(true)
+		if UNIT_BEHAVIOR_OVERRIDES.has(key):
+			_merge_config(merged, UNIT_BEHAVIOR_OVERRIDES[key])
+		_merge_config(merged, config)
+		_validate_unit_behavior_profile(merged)
+		unit_configs[unit_type] = merged
+func _validate_unit_behavior_profile(config: Dictionary) -> void:
+	if not VALID_UNIT_ROLES.has(String(config.get("role", ""))):
+		config["role"] = DEFAULT_UNIT_BEHAVIOR_PROFILE["role"]
+	if not VALID_ATTACK_STYLES.has(String(config.get("attack_style", ""))):
+		config["attack_style"] = DEFAULT_UNIT_BEHAVIOR_PROFILE["attack_style"]
+	if not VALID_UNIT_TARGET_PRIORITIES.has(String(config.get("target_priority", ""))):
+		config["target_priority"] = DEFAULT_UNIT_BEHAVIOR_PROFILE["target_priority"]
+	config["prefer_units_over_castle"] = bool(config.get("prefer_units_over_castle", true))
+	config["detection_range"] = clampf(float(config.get("detection_range", DEFAULT_UNIT_BEHAVIOR_PROFILE["detection_range"])), 0.0, 1000.0)
+	config["chase_range"] = clampf(float(config.get("chase_range", DEFAULT_UNIT_BEHAVIOR_PROFILE["chase_range"])), float(config["detection_range"]), 1500.0)
+	config["retarget_interval"] = clampf(float(config.get("retarget_interval", DEFAULT_UNIT_BEHAVIOR_PROFILE["retarget_interval"])), 0.05, 5.0)
+	config["hold_distance"] = clampf(float(config.get("hold_distance", DEFAULT_UNIT_BEHAVIOR_PROFILE["hold_distance"])), 0.0, float(config.get("range", 0.0)))
+	config["separation_radius"] = clampf(float(config.get("separation_radius", DEFAULT_UNIT_BEHAVIOR_PROFILE["separation_radius"])), 0.0, 96.0)
+	config["separation_strength"] = clampf(float(config.get("separation_strength", DEFAULT_UNIT_BEHAVIOR_PROFILE["separation_strength"])), 0.0, 2.0)
+	config["castle_aggression"] = clampf(float(config.get("castle_aggression", DEFAULT_UNIT_BEHAVIOR_PROFILE["castle_aggression"])), 0.0, 1.0)
+	config["low_hp_focus"] = clampf(float(config.get("low_hp_focus", DEFAULT_UNIT_BEHAVIOR_PROFILE["low_hp_focus"])), 0.0, 1.0)
+	config["frontline_bias"] = clampf(float(config.get("frontline_bias", DEFAULT_UNIT_BEHAVIOR_PROFILE["frontline_bias"])), 0.0, 1.0)
 func _parse_colors(value: Variant) -> Array[Color]:
 	var result: Array[Color] = []
 	for color_value in _to_array(value):
