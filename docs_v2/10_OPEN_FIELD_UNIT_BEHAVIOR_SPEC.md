@@ -877,6 +877,12 @@ Không hardcode behavior theo unit_type trực tiếp trong Unit.gd nếu có th
 
 ### Unit Phase 2 - Tách Setup Open Field Khỏi Lane Path
 
+Trạng thái:
+
+```text
+DONE - Unit.gd có setup_open_field(), SpawnManager branch theo movement_mode.
+```
+
 Mục tiêu:
 
 ```text
@@ -908,6 +914,12 @@ Lane_path legacy vẫn chạy như cũ.
 ```
 
 ### Unit Phase 3 - Target Scan Cơ Bản
+
+Trạng thái:
+
+```text
+DONE - Unit.gd đã có target scan cho enemy unit và enemy castle.
+```
 
 Mục tiêu:
 
@@ -953,6 +965,12 @@ Unit bỏ qua castle đã destroyed.
 
 ### Unit Phase 4 - Movement Open Field
 
+Trạng thái:
+
+```text
+DONE - Unit.gd đã có _process_open_field(), chase target, hold_distance, separation và bounds force cơ bản.
+```
+
 Mục tiêu:
 
 ```text
@@ -988,6 +1006,12 @@ Unit không đứng im khi còn enemy alive.
 
 ### Unit Phase 5 - Attack Một Mục Tiêu
 
+Trạng thái:
+
+```text
+DONE - Unit có thể damage enemy Unit hoặc PlayerBase/Castle trực tiếp trong open_field.
+```
+
 Mục tiêu:
 
 ```text
@@ -1021,6 +1045,12 @@ ScoreManager vẫn nhận castle_damaged qua PlayerBase.take_damage().
 ```
 
 ### Unit Phase 6 - Retarget Và Anti-Stuck Cơ Bản
+
+Trạng thái:
+
+```text
+DONE - Retarget theo interval, target invalid, target chết, castle destroyed, chase_range.
+```
 
 Mục tiêu:
 
@@ -1057,6 +1087,12 @@ Không còn enemy alive -> unit dừng an toàn.
 
 ### Unit Phase 7 - Làm Rõ Khác Biệt 8 Unit
 
+Trạng thái:
+
+```text
+DONE - Behavior profile đã được Unit.gd đọc và dùng đầy đủ. Test scene TestUnit8Roles.tscn verify 8 unit types có behavior khác biệt rõ ràng theo role, attack_style, target_priority, retarget_interval, hold_distance.
+```
+
 Mục tiêu:
 
 ```text
@@ -1084,6 +1120,12 @@ Khác cả nhịp đánh, khoảng cách, target ưu tiên, và cách tham gia g
 ```
 
 ### Unit Phase 8 - Visual/Asset Hooks
+
+Trạng thái:
+
+```text
+DONE - Unit.gd đã emit unit_attack_performed và tạo placeholder feedback theo attack_style.
+```
 
 Mục tiêu:
 
@@ -1114,7 +1156,30 @@ Sau này thiết kế asset biết Melee/Hammer/Tank/Mage/Gunner cần animation
 Không phải sửa lại logic combat lớn khi thay visual.
 ```
 
+Đã triển khai hiện tại:
+
+```text
+- EventBus.unit_attack_performed(unit, target, attack_style).
+- melee_hit / steady_slash: impact placeholder.
+- heavy_slam / heavy_body_hit: impact lớn hơn, cảm giác nặng hơn.
+- quick_stab: slash line + impact ngắn.
+- arrow_shot: line projectile placeholder màu vàng.
+- rapid_fire: line projectile nhỏ, rất nhanh.
+- magic_bolt: line projectile tím, dày hơn.
+```
+
 ### Unit Phase 9 - Test Riêng Cho Unit
+
+Trạng thái:
+
+```text
+DONE - Đã tạo 5 test scenes riêng cho unit behavior:
+- TestUnitOpenFieldSpawn.tscn: Test spawn open_field không path
+- TestUnitTargetEnemy.tscn: Test chọn và đánh enemy unit
+- TestUnitCastleAttack.tscn: Test đánh castle khi không có enemy unit
+- TestUnitRetargetOnDeath.tscn: Test retarget khi target chết
+- TestUnitRoleProfiles.tscn: Test khác biệt Scout/Tank/Archer behavior
+```
 
 Mục tiêu:
 

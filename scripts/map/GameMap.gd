@@ -19,9 +19,28 @@ var path_waypoints: Dictionary = {}
 func _ready() -> void:
 	add_to_group("game_maps")
 	_setup_bases()
+	_setup_paths_for_mode()
+	_setup_map_markers()
+
+
+func _setup_paths_for_mode() -> void:
+	if GameConfig.is_open_field_movement():
+		path_waypoints.clear()
+		_clear_path_visual()
+		if path_visual != null:
+			path_visual.visible = false
+		return
+	if path_visual != null:
+		path_visual.visible = true
 	_setup_default_paths()
 	_draw_path_lines()
-	_setup_map_markers()
+
+
+func _clear_path_visual() -> void:
+	if path_visual == null:
+		return
+	for child in path_visual.get_children():
+		child.free()
 
 
 func get_march_path(player_id: int) -> Array[Vector2]:

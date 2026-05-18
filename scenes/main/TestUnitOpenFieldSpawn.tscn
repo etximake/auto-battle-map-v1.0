@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://test_unit_open_field_spawn"]
+
+[ext_resource type="PackedScene" uid="uid://unit_scene" path="res://scenes/units/Unit.tscn" id="1_unit"]
+[ext_resource type="PackedScene" uid="uid://game_map_scene" path="res://scenes/map/GameMap.tscn" id="2_map"]
+[ext_resource type="Script" path="res://scripts/systems/UnitOpenFieldTestMonitor.gd" id="3_monitor"]
+
+[node name="TestUnitOpenFieldSpawn" type="Node2D"]
+
+[node name="GameMap" parent="." instance=ExtResource("2_map")]
+
+[node name="UnitOpenFieldTestMonitor" type="Node" parent="."]
+script = ExtResource("3_monitor")
+test_mode = "spawn_basic"
+auto_start = true
+test_duration = 10.0
+unit_scene = ExtResource("1_unit")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 200.0
+offset_top = 20.0
+offset_right = 1080.0
+offset_bottom = 80.0
+text = "Unit Phase 9 Test: Spawn Basic
+Unit spawn open_field mode không path_points
+Expected: 4 units spawn và không biến mất"
+horizontal_alignment = 1

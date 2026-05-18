@@ -486,6 +486,13 @@ Medium. Event flow changes from reach-signal to direct damage call.
 
 ## Phase 6 - GameMap Path Visualization As Legacy Only
 
+Status:
+
+```text
+DONE - GameMap.gd gates _setup_default_paths() and _draw_path_lines() behind
+GameConfig.is_open_field_movement(). PathVisual is hidden in open_field.
+```
+
 Goal:
 
 ```text
@@ -523,6 +530,14 @@ Low to medium. Visual behavior changes only in map setup.
 ```
 
 ## Phase 7 - AIController Policy Refactor
+
+Status:
+
+```text
+DONE - AIController.choose_objective_player() and get_unit_ai_policy() added.
+PlayerBase passes objective_player_id into SpawnManager.spawn_unit() in
+open_field. SpawnManager forwards it to Unit.setup_open_field().
+```
 
 Goal:
 
@@ -564,6 +579,18 @@ Medium. Existing AI is route-oriented but can be reused for objective selection.
 ```
 
 ## Phase 8 - Test Scene And Monitor Updates
+
+Status:
+
+```text
+PARTIAL - Unit-level tests done in earlier phases. Integration:
+- scenes/main/TestOpenFieldBattle.tscn (dynamic AI per GameConfig.player_count).
+- scripts/systems/OpenFieldBattleTestMonitor.gd (movement, deaths, castle damage).
+TODO:
+- TestOpenFieldRetarget.tscn (battle-level retarget).
+- TestOpenFieldCastleAttack.tscn (battle-level castle pressure).
+- TestLanePathLegacy.tscn (legacy mode regression).
+```
 
 Goal:
 

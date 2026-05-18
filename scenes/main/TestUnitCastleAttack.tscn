@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3 uid="uid://test_unit_castle_attack"]
+
+[ext_resource type="PackedScene" uid="uid://unit_scene" path="res://scenes/units/Unit.tscn" id="1_unit"]
+[ext_resource type="PackedScene" uid="uid://game_map_scene" path="res://scenes/map/GameMap.tscn" id="2_map"]
+[ext_resource type="PackedScene" uid="uid://player_base_scene" path="res://scenes/players/PlayerBase.tscn" id="3_castle"]
+[ext_resource type="Script" path="res://scripts/systems/UnitOpenFieldTestMonitor.gd" id="4_monitor"]
+
+[node name="TestUnitCastleAttack" type="Node2D"]
+
+[node name="GameMap" parent="." instance=ExtResource("2_map")]
+
+[node name="UnitOpenFieldTestMonitor" type="Node" parent="."]
+script = ExtResource("4_monitor")
+test_mode = "castle_attack"
+auto_start = true
+test_duration = 15.0
+unit_scene = ExtResource("1_unit")
+castle_scene = ExtResource("3_castle")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 200.0
+offset_top = 20.0
+offset_right = 1080.0
+offset_bottom = 80.0
+text = "Unit Phase 9 Test: Castle Attack
+1 unit, 1 enemy castle, không có enemy unit
+Expected: Unit đi tới castle và gây damage"
+horizontal_alignment = 1

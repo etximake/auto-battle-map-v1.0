@@ -119,7 +119,11 @@ func _spawn_next_reward() -> void:
 
 	EventBus.reward_consumed.emit(player_id, unit_type)
 	EventBus.castle_spawn_requested.emit(player_id, unit_type)
-	spawn_manager.call("spawn_unit", player_id, unit_type, _get_route_for_unit(unit_type))
+	if GameConfig.is_open_field_movement():
+		var empty_route: Array[Vector2] = []
+		spawn_manager.call("spawn_unit", player_id, unit_type, empty_route, _get_objective_player_id(unit_type))
+	else:
+		spawn_manager.call("spawn_unit", player_id, unit_type, _get_route_for_unit(unit_type))
 
 
 func _get_spawn_manager() -> Node:
@@ -145,6 +149,15 @@ func _get_route_for_unit(unit_type: String) -> Array[Vector2]:
 		return fallback
 
 	return []
+
+
+func _get_objective_player_id(unit_type: String) -> int:
+	var ai := _get_ai_controller()
+	if ai != null and ai.has_method("choose_objective_player"):
+		return int(ai.call("choose_objective_player", unit_type))
+	if ai != null and ai.has_method("choose_target_player"):
+		return int(ai.call("choose_target_player", unit_type))
+	return -1
 
 
 func _get_ai_controller() -> Node:

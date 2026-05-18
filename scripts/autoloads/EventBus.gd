@@ -19,6 +19,7 @@ signal score_changed(player_id: int, new_score: int)
 signal unit_spawned(unit: Node, player_id: int)
 signal unit_died(unit: Node, killer_player_id: int)
 signal unit_reached_base(unit: Node, target_base: Node)
+signal unit_attack_performed(unit: Node, target: Node, attack_style: String)
 
 # Legacy base events kept until PlayerBase is refactored into castle role.
 signal base_damaged(base: Node, amount: float, attacker_player: int)

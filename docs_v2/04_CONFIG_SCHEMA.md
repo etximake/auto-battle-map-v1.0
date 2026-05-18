@@ -113,6 +113,7 @@ castle.shoot_cooldown: min 0.1
 castle.queue_limit: clamp 1..200
 limits.max_units_per_player: clamp 1..200
 limits.max_total_units: clamp 1..500
+unit_behavior.movement_mode: "open_field" or "lane_path", fallback open_field
 unit stats missing: fallback safe defaults
 invalid color: fallback #AAAAAA
 unknown reward: ignore + warning

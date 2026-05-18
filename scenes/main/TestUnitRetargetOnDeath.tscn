@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://test_unit_retarget_death"]
+
+[ext_resource type="PackedScene" uid="uid://unit_scene" path="res://scenes/units/Unit.tscn" id="1_unit"]
+[ext_resource type="PackedScene" uid="uid://game_map_scene" path="res://scenes/map/GameMap.tscn" id="2_map"]
+[ext_resource type="Script" path="res://scripts/systems/UnitOpenFieldTestMonitor.gd" id="3_monitor"]
+
+[node name="TestUnitRetargetOnDeath" type="Node2D"]
+
+[node name="GameMap" parent="." instance=ExtResource("2_map")]
+
+[node name="UnitOpenFieldTestMonitor" type="Node" parent="."]
+script = ExtResource("3_monitor")
+test_mode = "retarget_death"
+auto_start = true
+test_duration = 15.0
+unit_scene = ExtResource("1_unit")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 200.0
+offset_top = 20.0
+offset_right = 1080.0
+offset_bottom = 80.0
+text = "Unit Phase 9 Test: Retarget On Death
+1 unit vs 2 enemy units
+Expected: Target chết -> unit chọn target mới"
+horizontal_alignment = 1

@@ -34,6 +34,21 @@ func choose_target_player(unit_type: String) -> int:
 			return _choose_balanced_target(targets, unit_type)
 
 
+func choose_objective_player(unit_type: String) -> int:
+	# Open-field objective selector. Reuses target selection logic but is
+	# semantically a hint for Unit to bias toward this enemy castle when
+	# no unit target is available.
+	return choose_target_player(unit_type)
+
+
+func get_unit_ai_policy(unit_type: String) -> Dictionary:
+	# Allows future per-strategy overrides of behavior profile fields.
+	return {
+		"objective_player_id": choose_objective_player(unit_type),
+		"strategy": strategy,
+	}
+
+
 func choose_route(unit_type: String, target_player_id: int) -> Array[Vector2]:
 	var game_map := _get_game_map()
 	if game_map != null and game_map.has_method("get_route"):

@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://test_unit_8_roles"]
+
+[ext_resource type="PackedScene" uid="uid://unit_scene" path="res://scenes/units/Unit.tscn" id="1_unit"]
+[ext_resource type="PackedScene" uid="uid://game_map_scene" path="res://scenes/map/GameMap.tscn" id="2_map"]
+[ext_resource type="Script" path="res://scripts/systems/Unit8RolesTestMonitor.gd" id="3_monitor"]
+
+[node name="TestUnit8Roles" type="Node2D"]
+
+[node name="GameMap" parent="." instance=ExtResource("2_map")]
+
+[node name="Unit8RolesTestMonitor" type="Node" parent="."]
+script = ExtResource("3_monitor")
+auto_start = true
+test_duration = 30.0
+unit_scene = ExtResource("1_unit")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 200.0
+offset_top = 20.0
+offset_right = 1080.0
+offset_bottom = 100.0
+text = "Unit Phase 7 Test: 8 Unit Roles Comparison
+Spawn tất cả 8 unit types và verify behavior khác biệt
+Melee, Soldier, Tank, Scout, Archer, Gunner, Hammer, Mage"
+horizontal_alignment = 1

@@ -210,9 +210,11 @@
   },
   "unit_behavior": {
     "_fields": {
+      "movement_mode": "open_field = base mode moi, lane_path = legacy waypoint mode.",
       "body_collision_enabled": "Bat/tat body collision giua cac unit.",
       "waypoint_distance": "Khoang cach du gan de unit xem nhu da toi waypoint."
     },
+    "movement_mode": "open_field",
     "body_collision_enabled": false,
     "waypoint_distance": 7.0
   },

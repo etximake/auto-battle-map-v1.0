@@ -39,7 +39,7 @@ var ball_panel_spawn_interval: float = 0.7; var ball_panel_ball_speed: float = 1
 var ball_panel_anchor_count: int = 6; var ball_panel_anchor_radius: float = 11.0; var ball_panel_anchor_min_y: float = 56.0; var ball_panel_anchor_reward_gap: float = 112.0; var ball_panel_spawn_angle_random_degrees: float = 15.0
 var ball_panel_spawn_y: float = 7.0; var ball_panel_peg_layout_mode: String = "mixed_by_player"; var ball_panel_peg_safe_margin: float = 36.0; var ball_panel_peg_safe_gap: float = 8.0; var ball_panel_peg_jitter: float = 0.3
 var reward_slot_order: Array[String] = []; var reward_enabled: Array[String] = []; var reward_max_active_slots: int = 5; var x2_mode: String = "next_reward"
-var unit_configs: Dictionary = {}; var auto_battle_config: Dictionary = {}; var unit_body_collision_enabled: bool = false; var unit_waypoint_distance: float = 7.0
+var unit_configs: Dictionary = {}; var auto_battle_config: Dictionary = {}; var unit_movement_mode: String = "open_field"; var unit_body_collision_enabled: bool = false; var unit_waypoint_distance: float = 7.0
 var hud_show_scores: bool = true; var hud_show_hp_bars: bool = true; var hud_show_defeated_overlay: bool = true; var hud_show_winner_overlay: bool = true
 var hud_width: float = 496.0; var hud_team_row_height: float = 20.0; var hud_hp_bar_width: float = 132.0
 var castle_max_hp: float = 500.0; var castle_spawn_cooldown: float = 1.0; var castle_queue_limit: int = 40
@@ -96,6 +96,7 @@ func get_unit_behavior_config(unit_type: String) -> Dictionary:
 	for key in behavior.keys():
 		behavior[key] = config.get(key, behavior[key])
 	return behavior
+func is_open_field_movement() -> bool: return unit_movement_mode == "open_field"
 func get_auto_battle_value(key: String, fallback: float) -> float: return maxf(float(auto_battle_config.get(key, fallback)), 0.0)
 func get_config_summary() -> String:
 	return "players=%d round=%.1f ball_spawn=%.2f rewards=%s" % [player_count, round_duration, ball_panel_spawn_interval, ",".join(reward_slot_order)]
@@ -162,6 +163,7 @@ func _apply_hud(value: Variant) -> void:
 	hud_width = float(hud_config.get("width", 496.0)); hud_team_row_height = float(hud_config.get("team_row_height", 20.0)); hud_hp_bar_width = float(hud_config.get("hp_bar_width", 132.0))
 func _apply_unit_behavior(value: Variant) -> void:
 	var behavior := _to_dictionary(value)
+	unit_movement_mode = String(behavior.get("movement_mode", "open_field"))
 	unit_body_collision_enabled = bool(behavior.get("body_collision_enabled", false))
 	unit_waypoint_distance = float(behavior.get("waypoint_distance", 7.0))
 func _apply_castle(value: Variant) -> void:
@@ -183,6 +185,8 @@ func _validate_config() -> void:
 	ball_panel_spawn_interval = maxf(ball_panel_spawn_interval, 0.1); ball_panel_max_live_balls = clampi(ball_panel_max_live_balls, 1, 50)
 	ball_panel_anchor_count = clampi(ball_panel_anchor_count, 0, 24); ball_panel_anchor_radius = maxf(ball_panel_anchor_radius, 1.0)
 	ball_panel_anchor_reward_gap = maxf(ball_panel_anchor_reward_gap, 64.0); unit_waypoint_distance = clampf(unit_waypoint_distance, 2.0, 24.0)
+	if not ["open_field", "lane_path"].has(unit_movement_mode):
+		unit_movement_mode = "open_field"
 	ball_panel_spawn_angle_random_degrees = clampf(ball_panel_spawn_angle_random_degrees, 0.0, 45.0)
 	ball_panel_spawn_y = maxf(ball_panel_spawn_y, 0.0); ball_panel_peg_safe_margin = maxf(ball_panel_peg_safe_margin, 0.0); ball_panel_peg_safe_gap = maxf(ball_panel_peg_safe_gap, 0.0); ball_panel_peg_jitter = clampf(ball_panel_peg_jitter, 0.0, 0.45)
 	if not ["mixed_by_player", "aligned", "staggered", "random_safe"].has(ball_panel_peg_layout_mode): ball_panel_peg_layout_mode = "mixed_by_player"
@@ -302,7 +306,7 @@ func _get_default_config() -> Dictionary:
 		"auto_battle": {"castle_unit_damage_multiplier": 1.0, "unit_kill_score": 5, "castle_damage_score_per_point": 0.1, "castle_destroy_score": 50},
 		"hud": {"show_scores": true, "show_hp_bars": true, "show_defeated_overlay": true, "show_winner_overlay": true, "width": 496.0, "team_row_height": 20.0, "hp_bar_width": 132.0},
 		"units": {"Melee": {"hp": 45, "damage": 14, "speed": 145, "range": 32, "cooldown": 0.95, "visual_radius": 14, "collision_radius": 8}, "Archer": {"hp": 28, "damage": 12, "speed": 135, "range": 95, "cooldown": 1.15, "visual_radius": 13, "collision_radius": 7}, "Gunner": {"hp": 35, "damage": 8, "speed": 150, "range": 105, "cooldown": 0.65, "visual_radius": 13, "collision_radius": 7}, "Hammer": {"hp": 75, "damage": 28, "speed": 105, "range": 36, "cooldown": 1.6, "visual_radius": 16, "collision_radius": 10}, "Tank": {"hp": 150, "damage": 8, "speed": 85, "range": 32, "cooldown": 1.5, "visual_radius": 18, "collision_radius": 11}, "Mage": {"hp": 30, "damage": 40, "speed": 115, "range": 85, "cooldown": 2.0, "visual_radius": 14, "collision_radius": 8}, "Scout": {"hp": 20, "damage": 5, "speed": 190, "range": 28, "cooldown": 0.8, "visual_radius": 12, "collision_radius": 7}, "Soldier": {"hp": 50, "damage": 15, "speed": 140, "range": 34, "cooldown": 1.0, "visual_radius": 15, "collision_radius": 9}},
-		"unit_behavior": {"body_collision_enabled": false, "waypoint_distance": 7.0},
+		"unit_behavior": {"movement_mode": "open_field", "body_collision_enabled": false, "waypoint_distance": 7.0},
 		"castle": {"max_hp": 500.0, "spawn_cooldown": 1.0, "queue_limit": 40, "shoot_range": 120.0, "shoot_damage": 10.0, "shoot_cooldown": 1.5, "projectile_speed": 300.0, "target_priority": "nearest"},
 		"limits": {"max_units_per_player": 30, "max_total_units": 120, "max_projectiles": 80},
 		"optional_modes": {"neutral_towers_enabled": false},

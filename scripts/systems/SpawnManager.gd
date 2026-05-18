@@ -28,7 +28,7 @@ func _ready() -> void:
 	_init_pool()
 
 
-func spawn_unit(player_id: int, unit_type: String, route_points: Array[Vector2] = []) -> Node:
+func spawn_unit(player_id: int, unit_type: String, route_points: Array[Vector2] = [], objective_player_id: int = -1) -> Node:
 	if _count_player_units(player_id) >= max_units_per_player:
 		return null
 	if active_units.size() >= max_total_units:
@@ -39,6 +39,11 @@ func spawn_unit(player_id: int, unit_type: String, route_points: Array[Vector2] 
 		return null
 
 	var unit: Node = _get_unit(unit_type)
+	if GameConfig.is_open_field_movement():
+		_activate_unit_open_field(unit, player_id, unit_type, _get_spawn_position_for_player(player_id), objective_player_id)
+		EventBus.unit_spawned.emit(unit, player_id)
+		return unit
+
 	var unit_path: Array[Vector2] = route_points.duplicate()
 	if unit_path.is_empty():
 		unit_path = _get_path_for_player(player_id)
@@ -112,6 +117,17 @@ func _activate_unit(unit: Node, player_id: int, unit_type: String, unit_path: Ar
 	unit.setup_unit(player_id, unit_type, unit_path)
 
 
+func _activate_unit_open_field(unit: Node, player_id: int, unit_type: String, spawn_position: Vector2, objective_player_id: int = -1) -> void:
+	unit.process_mode = Node.PROCESS_MODE_INHERIT
+	unit.show()
+	unit.add_to_group("units")
+	active_units.append(unit)
+	if unit.has_method("setup_open_field"):
+		unit.call("setup_open_field", player_id, unit_type, spawn_position, objective_player_id)
+	else:
+		unit.setup_unit(player_id, unit_type, [spawn_position])
+
+
 func _get_path_for_player(player_id: int) -> Array[Vector2]:
 	var game_map := get_node_or_null(game_map_path)
 	if game_map == null or not game_map.has_method("get_march_path"):
@@ -120,6 +136,13 @@ func _get_path_for_player(player_id: int) -> Array[Vector2]:
 	var unit_path: Array[Vector2] = []
 	unit_path.assign(game_map.get_march_path(player_id))
 	return unit_path
+
+
+func _get_spawn_position_for_player(player_id: int) -> Vector2:
+	var game_map := get_node_or_null(game_map_path)
+	if game_map != null and game_map.has_method("get_spawn_position"):
+		return game_map.call("get_spawn_position", player_id)
+	return Vector2.ZERO
 
 
 func _get_units_container() -> Node:
